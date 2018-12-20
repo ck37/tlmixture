@@ -87,7 +87,9 @@ analyze_folds =
       # plus the outcome variable, and add in the mixture bins.
       # TODO: determine if we do want to include the other exposure groups.
       vars = setdiff(names(data_train), c(outcome, exposure_names))
-      df_outcome_reg = cbind(data_train[, vars], mixture_bins)
+      df_outcome_reg = cbind(data_train[, vars],
+                             # Mixture_bins is a factor but we just need the integer codes.
+                             mixture_bins = as.integer(mixture_bins))
 
       # Estimate pooled outcome regression that includes all of the quantiles.
       # E[ Y | mixture bins, adjustment variables]
@@ -140,7 +142,7 @@ analyze_folds =
         # Also apply directly to test data here.
 
         # Dataframe to hold our counterfactuals.
-        df_outcome = data_test
+        df_outcome = data_test[, setdiff(names(data_test), c(outcome, exposure_names))]
 
         # Set all obs to have this mixture bin level.
         df_outcome$mixture_bins = bin_i
@@ -163,11 +165,12 @@ analyze_folds =
           g_pred = predict(reg_propensity, df_propensity, type = "response")
         }
 
-        # Trunctate g_hat
+        # TODO: Trunctate g_hat
 
         # Create clever covariate
         h1w = 1 / g_pred
-        haw = A * H1W
+        # is_current_bin = A (treatment indicator).
+        haw = is_current_bin * h1w
 
         # Create dataframe of results.
 
