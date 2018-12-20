@@ -86,7 +86,7 @@ analyze_folds =
       # For the outcome regression exclude the original exposures in this group
       # plus the outcome variable, and add in the mixture bins.
       # TODO: determine if we do want to include the other exposure groups.
-      vars = setdiff(names(data), c(outcome, exposure_names))
+      vars = setdiff(names(data_train), c(outcome, exposure_names))
       df_outcome_reg = cbind(data_train[, vars], mixture_bins)
 
       # Estimate pooled outcome regression that includes all of the quantiles.
