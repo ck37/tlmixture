@@ -17,6 +17,16 @@ create_exposure_weights =
 
   # Extract the first component.
   weights = loadings_mat[, 1]
+
+  # Determine which is more common: positive or negative loadings.
+  avg_positive = mean(weights >= 0, na.rm = TRUE)
+
+  # If we have more negative than positive loadings, reverse the sign.
+  # (This would happen with a protective mixture.)
+  if (avg_positive < 0.5) {
+    weights = weights * -1
+  }
+
   # Set negative values to 0.
   weights[weights < 0] = 0
 
