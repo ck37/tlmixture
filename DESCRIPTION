@@ -1,0 +1,27 @@
+Package: tlmixture
+Title: Data-adaptive Creation Of Exposure (Treatment) Mixtures Using Targeted Learning
+Version: 0.0.0.9000
+Authors@R: 
+    person(given = "Chris",
+           family = "Kennedy",
+           role = c("aut", "cre"),
+           email = "chrisken@gmail.com",
+           comment = c(ORCID = "0000-0001-7444-2766"))
+Description: Data-adaptive creation of exposure mixtures using targeted learning.
+License: MIT + file LICENSE
+Encoding: UTF-8
+LazyData: true
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 6.1.1
+Suggests: 
+    testthat,
+    MASS,
+    gWQS,
+    glmnet
+Imports: 
+    magrittr,
+    purrr,
+    rsample,
+    Rsolnp,
+    pls,
+    dplyr

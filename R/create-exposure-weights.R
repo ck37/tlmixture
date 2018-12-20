@@ -1,0 +1,63 @@
+#' Create exposure weights
+create_exposure_weights =
+  function(data, outcome, exposures, quantiles, verbose = FALSE) {
+
+  # Let's use partial least squares for now.
+
+  formula = as.formula(paste0(outcome, " ~ ."))
+
+  # Only calculate the first component.
+  # TODO: decide about incorporating adjustment variables and other exposures as well.
+  # E.g. to residualize the outcome.
+  reg = pls::plsr(formula, data = data[, c(outcome, exposures)], ncomp = 1L)
+
+  # Extract the loadings for each component.
+  # TODO: confirm we should use $loadings and not $loadings.weights (unclear what the difference is).
+  loadings_mat = matrix(reg$loadings, nrow = nrow(reg$loadings))
+
+  # Extract the first component.
+  weights = loadings_mat[, 1]
+  # Set negative values to 0.
+  weights[weights < 0] = 0
+
+  # Could normalize to sum to 1.
+  weights_norm = weights / sum(weights)
+
+  if (verbose) {
+    cat("Raw weights:", round(weights, 3),
+        "Normalized:", round(weights_norm, 3), "\n")
+  }
+
+  # Return the normalized weights.
+  results = list(weights = weights_norm)
+
+  # Don't use this for now - could be a separate function.
+  if (FALSE) {
+    # We use various functions from wqs-helpers.R to estimate these weights.
+
+    # Family is currently hard-coded to binomial but this should be detected
+    # in our main function and passed through.
+    family = "binomial"
+
+
+    # If TRUE, exposure has a positive relationship to outcome,
+    # otherwise it has a negative relationship.
+    # TODO: can we determine this automatically, e.g. based on partial least squares or supervised PCA?
+    b1_pos = TRUE
+
+    # calculate parameters
+    params = optim.f(data_b[, q_name, drop = FALSE],
+                     # Outcome variable.
+                     data_b[, y_name, drop = FALSE],
+
+                     b1_pos,
+                     b1_constr,
+                     # Outcome family, either binomial or gaussian presumably.
+                     family,
+                     # Adjustment covariates.
+                     data_b[, cov_name, drop = FALSE])
+  }
+
+
+  return(results)
+}

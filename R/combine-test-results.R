@@ -1,0 +1,42 @@
+#' Combine test results
+#'
+combine_test_results =
+  function(test_results,
+           family,
+           verbose = FALSE) {
+
+  #browser()
+
+
+  # Hopefully we get the same number of groups for each training fold.
+  # But if it's data-adaptive then we could get different results across folds.
+  # TODO: talk about this scenario with Alan.
+  exposure_groups = result$fold_results[[1]]$exposure_groups
+
+  weight_dfs = list()
+
+  # Loop over exposure groups.
+  for (group_i in seq(length(exposure_groups))) {
+
+    # Create a dataframe with a row for each fold and each column in the weight.
+    weights = data.frame(t(sapply(result$fold_results, function(fold_i) {
+      # Return the weights for this group, across all training folds.
+      fold_i$weights[[group_i]]
+    })))
+    names(weights) = exposure_groups[[group_i]]
+
+    # Save this weight dataframe.
+    weight_dfs[[group_i]] = weights
+
+    # Report on average weight across folds.
+    if (verbose) {
+      cat("\nWeight dataframe:\n")
+      print(weights)
+      cat("\nAverage normalized weights:\n")
+      print(colMeans(weights))
+    }
+
+  }
+  results = list(weight_dfs = weight_dfs)
+  return(results)
+}

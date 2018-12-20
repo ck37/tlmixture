@@ -1,0 +1,149 @@
+#' This function will be called from tlmixture() on each CV-TMLE split.
+#' @importFrom SuperLearner SuperLearner SuperLearner.CV.control
+#' @importFrom magrittr %>%
+#' @importFrom dplyr ntile
+analyze_folds =
+  function(splits, outcome, exposures,
+           family,
+           quantiles_mixtures,
+           quantiles_exposures,
+           estimator_outcome,
+           estimator_propensity,
+           cluster_exposures,
+           sl_folds = 2L,
+           verbose = FALSE) {
+
+    if (verbose) {
+      cat("Analyzing a training/test split.\n")
+    }
+
+    # Training data split.
+    data_train = rsample::analysis(splits)
+
+    # Test / validation split.
+    data_test = rsample::assessment(splits)
+
+    # Define groups of exposures (skip this step by default)
+    if (cluster_exposures) {
+      # TBD.
+      exposure_groups = NA
+    } else {
+
+      # Single group with all of the exposures.
+      exposure_groups = list(exposures)
+    }
+
+    # A single vector with all exposure names.
+    # (Will be the same as "exposures" if there is a single group, but if there
+    # are multiple groups this vector version will be helpful.)
+    all_exposures = unlist(exposure_groups)
+
+    if (verbose) {
+      cat("Exposure groups to analyze:", length(exposure_groups), "\n")
+    }
+
+    # Loop over exposure groups.
+    weights = list()
+    cutpoints = list()
+    for (group_i in seq_along(exposure_groups)) {
+
+      exposure_names = exposure_groups[[group_i]]
+
+      # Convert each exposure in this group to quantiles.
+      # TODO: extract the quantile probabilities so that they can be applied
+      # to the test set.
+      # NOTE: we are currently not using these quantiles.
+      exp_quantiles = data_train[, exposure_names] %>%
+        purrr::map_df(dplyr::ntile, quantiles_exposures)
+
+      # Create exposure weights, hopefully resulting in a convex combination or
+      # something similar.
+      result = create_exposure_weights(data_train,
+                                       outcome,
+                                       exposures = exposure_names,
+                                       quantiles = exp_quantiles,
+                                       verbose = verbose)
+
+      weights[[group_i]] = result$weights
+
+      mixture_train = as.vector(as.matrix(data_train[, exposure_names]) %*%
+                                  matrix(result$weights, ncol = 1))
+      mixture_test = as.vector(as.matrix(data_train[, exposure_names]) %*%
+                                 matrix(result$weights, ncol = 1))
+
+      # Eventually: do targeted learning estimation.
+
+      # Calculate quantiles to discretize the continuous mixture.
+      quantiles = quantile(mixture_train,
+                           probs = seq(0, 1, by = 1 / quantiles_mixtures))
+      cutpoints[[group_i]] = quantiles
+
+      # Discretize into quantiles (quantiles_mixtures)
+      # If we don't set include.lowest = TRUE then the lowest obs will have an NA.
+      mixture_bins = cut(mixture_train, breaks = quantiles, include.lowest = TRUE)
+      mixture_bins_test = cut(mixture_test, breaks = quantiles, include.lowest = TRUE)
+
+      # For the outcome regression exclude the original exposures in this group
+      # plus the outcome variable, and add in the mixture bins.
+      # TODO: determine if we do want to include the other exposure groups.
+      vars = setdiff(names(data), c(outcome, exposure_names))
+      df_outcome_reg = cbind(data_train[, vars], mixture_bins)
+
+      # Estimate pooled outcome regression that includes all of the quantiles.
+      # E[ Y | mixture bins, adjustment variables]
+      # TODO: support arbitrary estimators, like sl3, mlr, caret, etc.
+      reg_outcome =
+        SuperLearner(Y = data_train[[outcome]],
+                     X = df_outcome_reg,
+                     family = family,
+                     SL.library = estimator_outcome)
+
+      if (verbose) {
+        cat("Outcome regression result:\n")
+        print(reg_outcome)
+      }
+
+      regs_propensity = list()
+
+      # Loop over bins.
+      for (bin_i in seq(quantiles_mixtures)) {
+        # (Could estimate outcome regression per mixture bin, but using pooled currently.)
+
+        # Estimate propensity score regression per mixture_bin.
+        reg_propensity =
+          # We convert mixture_bins to an integer because it's a factor.
+          SuperLearner(Y = as.integer(as.integer(mixture_bins) == bin_i),
+                       X = subset(df_outcome_reg, select = -c(mixture_bins)),
+                       family = "binomial",
+                       cvControl = SuperLearner.CV.control(V = sl_folds,
+                                                           stratifyCV = TRUE),
+                       SL.library = estimator_propensity)
+
+        if (verbose) {
+          cat("Propensity regression result", paste0("(", bin_i, "):\n"))
+          print(reg_propensity)
+        }
+
+        # Save fits to apply to test data.
+        regs_propensity[[bin_i]] = reg_propensity
+
+        # Also apply directly to test data here.
+        # Predict Q(1, W) - all observations have this mixture level.
+        # Predict g - propensity to have this mixture level.
+        # Trunctate g_hat
+        # Create dataframe of results.
+
+      }
+    }
+
+    ##################
+    # Analyze test set.
+
+    # Compile results.
+    results = list(weights = weights,
+                   exposure_groups = exposure_groups,
+                   cutpoints = cutpoints)
+
+    return(results)
+
+}
