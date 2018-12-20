@@ -94,7 +94,8 @@ weights
 
 # tlmixture test run.
 library(tlmixture)
-folds_cvtmle = 2L
+#folds_cvtmle = 2L
+folds_cvtmle = 5L
 estimators = c("SL.mean", "SL.glmnet")
 cluster_exposures = FALSE
 verbose = TRUE

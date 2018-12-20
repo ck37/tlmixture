@@ -25,3 +25,5 @@ Imports:
     Rsolnp,
     pls,
     dplyr
+Depends:
+    SuperLearner

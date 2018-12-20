@@ -4,7 +4,7 @@
 \alias{combine_test_results}
 \title{Combine test results}
 \usage{
-combine_test_results(test_results, family, verbose = FALSE)
+combine_test_results(result, family, verbose = FALSE)
 }
 \description{
 Combine test results

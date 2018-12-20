@@ -109,15 +109,23 @@ analyze_folds =
       for (bin_i in seq(quantiles_mixtures)) {
         # (Could estimate outcome regression per mixture bin, but using pooled currently.)
 
+        # This is our A
+        is_current_bin = as.integer(as.integer(mixture_bins) == bin_i)
+
         # Estimate propensity score regression per mixture_bin.
         reg_propensity =
+          # Suppress warnings like "In lognet(x, is.sparse, ix, jx, y, weights, offset, alpha,  ... :
+          # one multinomial or binomial class has fewer than 8  observations; dangerous ground"
+          # TODO: only suppress specific warnings, like Oleg has in stremr.
+          suppressWarnings(
           # We convert mixture_bins to an integer because it's a factor.
-          SuperLearner(Y = as.integer(as.integer(mixture_bins) == bin_i),
+          SuperLearner(Y = is_current_bin,
                        X = subset(df_outcome_reg, select = -c(mixture_bins)),
                        family = "binomial",
                        cvControl = SuperLearner.CV.control(V = sl_folds,
                                                            stratifyCV = TRUE),
                        SL.library = estimator_propensity)
+          )
 
         if (verbose) {
           cat("Propensity regression result", paste0("(", bin_i, "):\n"))
@@ -127,10 +135,40 @@ analyze_folds =
         # Save fits to apply to test data.
         regs_propensity[[bin_i]] = reg_propensity
 
+
+        ###############
         # Also apply directly to test data here.
+
+        # Dataframe to hold our counterfactuals.
+        df_outcome = data_test
+
+        # Set all obs to have this mixture bin level.
+        df_outcome$mixture_bins = bin_i
+
         # Predict Q(1, W) - all observations have this mixture level.
+        if (class(reg_outcome) == "SuperLearner") {
+          q_pred = predict(reg_outcome, df_outcome, onlySL = TRUE)$pred
+        } else {
+          q_pred = predict(reg_outcome, df_outcome)
+        }
+
+        df_propensity = subset(df_outcome_reg, select = -c(mixture_bins))
+
         # Predict g - propensity to have this mixture level.
+        if (class(reg_propensity) == "SuperLearner") {
+          # TODO: is type = "response" needed for SuperLearner? Need to check.
+          g_pred = predict(reg_propensity, df_propensity, onlySL = TRUE,
+                           type = "response")$pred
+        } else {
+          g_pred = predict(reg_propensity, df_propensity, type = "response")
+        }
+
         # Trunctate g_hat
+
+        # Create clever covariate
+        h1w = 1 / g_pred
+        haw = A * H1W
+
         # Create dataframe of results.
 
       }
