@@ -6,7 +6,7 @@
 \usage{
 analyze_folds(splits, outcome, exposures, family, quantiles_mixtures,
   quantiles_exposures, estimator_outcome, estimator_propensity,
-  cluster_exposures, sl_folds = 2L, verbose = FALSE)
+  cluster_exposures, folds_sl = 2L, verbose = FALSE)
 }
 \arguments{
 \item{splits}{tbd}
@@ -27,7 +27,7 @@ analyze_folds(splits, outcome, exposures, family, quantiles_mixtures,
 
 \item{cluster_exposures}{tbd}
 
-\item{sl_folds}{tbd}
+\item{folds_sl}{tbd}
 
 \item{verbose}{tbd}
 }

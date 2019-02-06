@@ -12,6 +12,7 @@
 #' (default 4).
 #'
 #' @param folds_cvtmle Number of CV-TMLE folds (default 2).
+#' @param folds_sl Number of SL folds during outcome and propensity estimation.
 # TODO: support arbitrary estimators (sl3, mlr, etc.)
 #' @param estimator_outcome SuperLearner library for outcome estimation.
 # TODO: support arbitrary estimators (sl3, mlr, etc.)
@@ -26,6 +27,7 @@ tlmixture =
            quantiles_mixtures = 3L,
            quantiles_exposures = 4L,
            folds_cvtmle = 2L,
+           folds_sl = 2L,
            estimator_outcome = c("SL.mean", "SL.glmnet"),
            estimator_propensity = estimator_outcome,
            cluster_exposures = FALSE,
@@ -54,6 +56,7 @@ tlmixture =
                family = family,
                quantiles_mixtures = quantiles_mixtures,
                quantiles_exposures = quantiles_exposures,
+               folds_sl = folds_sl,
                estimator_outcome = estimator_outcome,
                estimator_propensity = estimator_propensity,
                cluster_exposures = cluster_exposures,

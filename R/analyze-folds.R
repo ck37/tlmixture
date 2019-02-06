@@ -9,7 +9,7 @@
 #' @param estimator_outcome tbd
 #' @param estimator_propensity tbd
 #' @param cluster_exposures tbd
-#' @param sl_folds tbd
+#' @param folds_sl tbd
 #' @param verbose tbd
 #'
 #' @importFrom SuperLearner SuperLearner SuperLearner.CV.control
@@ -24,7 +24,7 @@ analyze_folds =
            estimator_outcome,
            estimator_propensity,
            cluster_exposures,
-           sl_folds = 2L,
+           folds_sl = 2L,
            verbose = FALSE) {
 
     if (verbose) {
@@ -121,6 +121,9 @@ analyze_folds =
         SuperLearner(Y = data_train[[outcome]],
                      X = df_outcome_reg,
                      family = family,
+                     cvControl = SuperLearner.CV.control(V = folds_sl,
+                                                         # Stratify if we have a binary outcome.
+                                                         stratifyCV = family == "binomial"),
                      SL.library = estimator_outcome)
 
       if (verbose) {
@@ -152,7 +155,7 @@ analyze_folds =
           SuperLearner(Y = is_current_bin,
                        X = subset(df_outcome_reg, select = -c(mixture_bins)),
                        family = "binomial",
-                       cvControl = SuperLearner.CV.control(V = sl_folds,
+                       cvControl = SuperLearner.CV.control(V = folds_sl,
                                                            stratifyCV = TRUE),
                        SL.library = estimator_propensity)
           )

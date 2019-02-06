@@ -5,7 +5,7 @@
 \title{Targeted learning for exposure mixtures}
 \usage{
 tlmixture(data, outcome, exposures, quantiles_mixtures = 3L,
-  quantiles_exposures = 4L, folds_cvtmle = 2L,
+  quantiles_exposures = 4L, folds_cvtmle = 2L, folds_sl = 2L,
   estimator_outcome = c("SL.mean", "SL.glmnet"),
   estimator_propensity = estimator_outcome, cluster_exposures = FALSE,
   verbose = FALSE)
@@ -25,6 +25,8 @@ a vector of pre-clustered exposures.}
 (default 4).}
 
 \item{folds_cvtmle}{Number of CV-TMLE folds (default 2).}
+
+\item{folds_sl}{Number of SL folds during outcome and propensity estimation.}
 
 \item{estimator_outcome}{SuperLearner library for outcome estimation.}
 
