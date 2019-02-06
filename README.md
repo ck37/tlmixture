@@ -6,7 +6,7 @@
 The goal of tlmixture is to …
 
 [![Travis build
-status](https://travis-ci.org/ck37/tlmixture.svg?branch=master)](https://travis-ci.org/ck37/tlmixture)
+Status](https://travis-ci.com/ck37/tlmixture.svg?token=dUHb6GuutEciSMYLsscV&branch=master)](https://travis-ci.com/ck37/tlmixture)
 [![AppVeyor build
 status](https://ci.appveyor.com/api/projects/status/github/ck37/tlmixture?branch=master&svg=true)](https://ci.appveyor.com/project/ck37/tlmixture)
 
