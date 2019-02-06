@@ -19,7 +19,9 @@ combine_test_results =
   # Loop over exposure groups.
   for (group_i in seq(length(exposure_groups))) {
 
-    # Create a dataframe with a row for each fold and each column in the weight.
+    ###############
+    #  Create a dataframe with a row for each fold and each column in the weight.
+
     weights = data.frame(t(sapply(result, function(fold_i) {
       # Return the weights for this group, across all training folds.
       fold_i$weights[[group_i]]
@@ -36,6 +38,9 @@ combine_test_results =
       cat("\nAverage normalized weights:\n")
       print(colMeans(weights))
     }
+
+    ################
+    # TODO: implement CV-TMLE
 
   }
   results = list(weight_dfs = weight_dfs)
