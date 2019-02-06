@@ -6,7 +6,7 @@
 #' @param outcome Name of the outcome variable.
 #' @param exposures A vector of exposure names, or (not yet supported) a list where each element is
 #' a vector of pre-clustered exposures.
-#' @param quantiles_mixture Number of quantiles to use for discretizing mixture
+#' @param quantiles_mixtures Number of quantiles to use for discretizing mixture
 #' (default 3 - low, medium, high).
 #' @param quantiles_exposures Number of quantiles to use for discretizing continuous exposures
 #' (default 4).

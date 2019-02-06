@@ -18,6 +18,9 @@ tlmixture(data, outcome, exposures, quantiles_mixtures = 3L,
 \item{exposures}{A vector of exposure names, or (not yet supported) a list where each element is
 a vector of pre-clustered exposures.}
 
+\item{quantiles_mixtures}{Number of quantiles to use for discretizing mixture
+(default 3 - low, medium, high).}
+
 \item{quantiles_exposures}{Number of quantiles to use for discretizing continuous exposures
 (default 4).}
 
@@ -31,9 +34,6 @@ a vector of pre-clustered exposures.}
 sub-groups (default FALSE, TRUE not yet supported).}
 
 \item{verbose}{If TRUE, display more detailed info during execution.}
-
-\item{quantiles_mixture}{Number of quantiles to use for discretizing mixture
-(default 3 - low, medium, high).}
 }
 \description{
 This is our main function.

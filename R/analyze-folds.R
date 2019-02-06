@@ -1,7 +1,21 @@
 #' This function will be called from tlmixture() on each CV-TMLE split.
+#'
+#' @param splits tbd
+#' @param outcome tbd
+#' @param exposures tbd
+#' @param family tbd
+#' @param quantiles_mixtures tbd
+#' @param quantiles_exposures tbd
+#' @param estimator_outcome tbd
+#' @param estimator_propensity tbd
+#' @param cluster_exposures tbd
+#' @param sl_folds tbd
+#' @param verbose tbd
+#'
 #' @importFrom SuperLearner SuperLearner SuperLearner.CV.control
 #' @importFrom magrittr %>%
 #' @importFrom dplyr ntile
+#' @importFrom stats quantile predict
 analyze_folds =
   function(splits, outcome, exposures,
            family,
@@ -76,7 +90,7 @@ analyze_folds =
                                   matrix(result$weights, ncol = 1))
 
       # Create mixture on the test data.
-      mixture_test = as.vector(as.matrix(data_train[, exposure_names]) %*%
+      mixture_test = as.vector(as.matrix(data_test[, exposure_names]) %*%
                                  matrix(result$weights, ncol = 1))
 
       # Eventually: do targeted learning estimation.
@@ -168,7 +182,7 @@ analyze_folds =
           q_pred = predict(reg_outcome, df_outcome)
         }
 
-        df_propensity = subset(df_outcome_reg, select = -c(mixture_bins))
+        df_propensity = subset(df_outcome, select = -c(mixture_bins))
 
         # Predict g - propensity to have this mixture level.
         if (class(reg_propensity) == "SuperLearner") {
@@ -184,17 +198,22 @@ analyze_folds =
         # Create clever covariate
         h1w = 1 / g_pred
         # is_current_bin = A (treatment indicator).
-        haw = is_current_bin * h1w
+        test_treatment_indicator = as.integer(mixture_bins_test == bin_i)
+        # TODO: need a treatment indicator test data, not training data.
+        haw = test_treatment_indicator * h1w
 
 
         # NOTE: we don't calculate IC here because we need to do CV-TMLE fluctuation
         # using all folds' results (later).
 
         # Create dataframe of results for this mixture quantile.
+        # ERROR (with 20 folds)
+        # Error in data.frame(quantile = bin_i, in_quantile = is_current_bin, q_pred,  :
+        # arguments imply differing number of rows: 1, 94, 6
         new_result = data.frame(quantile = bin_i,
                                 # TODO: calculate and return Y_star
                                 # This is our A for this quantile.
-                                in_quantile = is_current_bin,
+                                in_quantile = test_treatment_indicator,
                                 q_pred, g_pred, h1w, haw)
 
         # Append to our tracking dataframe.

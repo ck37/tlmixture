@@ -1,4 +1,12 @@
 #' Create exposure weights
+#'
+#' @param data tbd
+#' @param outcome tbd
+#' @param exposures tbd
+#' @param quantiles tbd
+#' @param verbose tbd
+#'
+#' @importFrom stats as.formula as.formula binomial coef glm lm
 create_exposure_weights =
   function(data, outcome, exposures, quantiles, verbose = FALSE) {
 

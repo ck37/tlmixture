@@ -116,10 +116,11 @@ optim.f <- function(Q, y, b1_pos, b1_constr, family, covrts){
 
 
 # function that fit the wqs model
+#' @importFrom stats outcome
 model.fit <- function(Q, y, wghts, family, covrts, wqs2){
 
   Q = as.matrix(Q)
-  wqs = Q%*%wghts
+  wqs = Q %*% wghts
   wqs = as.data.frame(wqs)
   names(wqs) = "wqs"
 

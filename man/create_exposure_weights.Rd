@@ -7,6 +7,17 @@
 create_exposure_weights(data, outcome, exposures, quantiles,
   verbose = FALSE)
 }
+\arguments{
+\item{data}{tbd}
+
+\item{outcome}{tbd}
+
+\item{exposures}{tbd}
+
+\item{quantiles}{tbd}
+
+\item{verbose}{tbd}
+}
 \description{
 Create exposure weights
 }

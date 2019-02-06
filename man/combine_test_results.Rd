@@ -6,6 +6,13 @@
 \usage{
 combine_test_results(result, family, verbose = FALSE)
 }
+\arguments{
+\item{result}{tbd}
+
+\item{family}{tbd}
+
+\item{verbose}{tbd}
+}
 \description{
 Combine test results
 }

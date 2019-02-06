@@ -1,5 +1,8 @@
 #' Combine test results
 #'
+#' @param result tbd
+#' @param family tbd
+#' @param verbose tbd
 combine_test_results =
   function(result,
            family,
@@ -41,6 +44,8 @@ combine_test_results =
 
     ################
     # TODO: implement CV-TMLE
+
+    # Estimate epsilon
 
   }
   results = list(weight_dfs = weight_dfs)

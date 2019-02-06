@@ -8,6 +8,29 @@ analyze_folds(splits, outcome, exposures, family, quantiles_mixtures,
   quantiles_exposures, estimator_outcome, estimator_propensity,
   cluster_exposures, sl_folds = 2L, verbose = FALSE)
 }
+\arguments{
+\item{splits}{tbd}
+
+\item{outcome}{tbd}
+
+\item{exposures}{tbd}
+
+\item{family}{tbd}
+
+\item{quantiles_mixtures}{tbd}
+
+\item{quantiles_exposures}{tbd}
+
+\item{estimator_outcome}{tbd}
+
+\item{estimator_propensity}{tbd}
+
+\item{cluster_exposures}{tbd}
+
+\item{sl_folds}{tbd}
+
+\item{verbose}{tbd}
+}
 \description{
 This function will be called from tlmixture() on each CV-TMLE split.
 }

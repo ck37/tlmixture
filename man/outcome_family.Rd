@@ -6,6 +6,11 @@
 \usage{
 outcome_family(data, outcome_field)
 }
+\arguments{
+\item{data}{tbd}
+
+\item{outcome_field}{tbd}
+}
 \description{
 Detect outcome family based on the outcome data vector
 }
