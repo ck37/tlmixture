@@ -63,7 +63,10 @@ tlmixture =
   ##################
   # Combine test set results (CV-TMLE etc.)
 
-  combined_results = combine_test_results(fold_results, family = family, verbose = verbose)
+  combined_results =
+    combine_test_results(fold_results, family = family,
+                         quantiles_mixtures = quantiles_mixtures,
+                         verbose = verbose)
 
 
   ##################

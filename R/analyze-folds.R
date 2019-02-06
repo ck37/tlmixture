@@ -197,21 +197,27 @@ analyze_folds =
 
         # Create clever covariate
         h1w = 1 / g_pred
+
         # is_current_bin = A (treatment indicator).
-        test_treatment_indicator = as.integer(mixture_bins_test == bin_i)
-        # TODO: need a treatment indicator test data, not training data.
+        test_treatment_indicator = as.integer(as.integer(mixture_bins_test) == bin_i)
+
+        # Set NAs to 0 for now.
+        # TODO: figure out why some are NAs - just NA in the data? Or due to quantiles.
+        # TODO: use actual adjustment for missingness, or another solution.
+        test_treatment_indicator[is.na(test_treatment_indicator)] = 0L
+
         haw = test_treatment_indicator * h1w
 
+        # Confirm we have no NAs in our haw vector.
+        stopifnot(sum(is.na(haw)) == 0L)
 
         # NOTE: we don't calculate IC here because we need to do CV-TMLE fluctuation
         # using all folds' results (later).
 
         # Create dataframe of results for this mixture quantile.
-        # ERROR (with 20 folds)
-        # Error in data.frame(quantile = bin_i, in_quantile = is_current_bin, q_pred,  :
-        # arguments imply differing number of rows: 1, 94, 6
         new_result = data.frame(quantile = bin_i,
                                 # TODO: calculate and return Y_star
+                                y = data_test[[outcome]],
                                 # This is our A for this quantile.
                                 in_quantile = test_treatment_indicator,
                                 q_pred, g_pred, h1w, haw)

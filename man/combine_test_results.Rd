@@ -4,7 +4,7 @@
 \alias{combine_test_results}
 \title{Combine test results}
 \usage{
-combine_test_results(result, family, verbose = FALSE)
+combine_test_results(result, family, quantiles_mixtures, verbose = FALSE)
 }
 \arguments{
 \item{result}{tbd}
@@ -12,6 +12,8 @@ combine_test_results(result, family, verbose = FALSE)
 \item{family}{tbd}
 
 \item{verbose}{tbd}
+
+\item{quantile_mixtures}{tbd}
 }
 \description{
 Combine test results

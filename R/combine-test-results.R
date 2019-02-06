@@ -2,10 +2,15 @@
 #'
 #' @param result tbd
 #' @param family tbd
+#' @param quantile_mixtures tbd
 #' @param verbose tbd
+#'
+#' @importFrom stats glm
+#'
 combine_test_results =
   function(result,
            family,
+           quantiles_mixtures,
            verbose = FALSE) {
 
 
@@ -43,9 +48,91 @@ combine_test_results =
     }
 
     ################
-    # TODO: implement CV-TMLE
+    # Loop over mixture quantiles
+    for (quantile_i in seq(quantiles_mixtures)) {
 
-    # Estimate epsilon
+      # Extract the dataframes for this quantile across all CV-folds.
+      test_results =
+        do.call(rbind, lapply(seq(length(result)), function(fold_i) {
+          fold = result[[fold_i]]
+
+          # Return the weights for this group, across all training folds.
+          df = fold$test_results[[group_i]]
+
+          # Restrict to the current quantile that we're analyzing
+          df = df[df$quantile == quantile_i, ]
+
+          # Save the fold for future reference.
+          df$fold = fold_i
+
+          # Return the dataframe.
+          df
+      }))
+
+      # This dataframe should be the same size as the original dataset.
+      stopifnot(nrow(test_results) == nrow(data))
+
+      ########################
+      # TODO: implement CV-TMLE
+
+      # From tmle::estimateQ.
+      test_results$logit_q_hat = qlogis(test_results$q_pred)
+
+      # Estimate epsilon
+      # This is for a logistic fluctuation.
+      # TODO: try alternative version at
+      # https://github.com/ck37/varimpact/blob/master/R/estimate_pooled_results.R#L96-L106
+      reg = try(glm(y ~ -1 + offset(logit_q_hat) + haw,
+                    data = test_results, family = "binomial"))
+      if ("try-error" %in% class(reg)) {
+        cat("Error in epsilon rgression.\n")
+        browser()
+      }
+
+      epsilon = try(coef(reg))
+
+      # Make sure that epsilon isn't NA.
+      stopifnot(!is.na(epsilon))
+
+      # Fluctuate Q_star
+      q_star = test_results$logit_q_hat + epsilon * test_results$h1w
+
+      # Transform Q_star
+      q_star = plogis(q_star)
+
+      if (verbose) cat("Estimating per-fold thetas: ")
+      # Estimate parameter on every validation fold.
+      thetas = tapply(q_star, test_results$fold, mean, na.rm = TRUE)
+      if (verbose) cat(thetas, "\n")
+
+      # Move Q_star into the data so that it can be analyzed per-fold.
+      test_results$q_star = q_star
+      rm(q_star)
+
+      # Calculate ICs (per fold)
+      if (verbose) cat("Calculating per-fold influence curves\n")
+      # Get influence curve per fold.
+      # Influence_curves here is a list, where each element is a result.
+      # We can't convert to a matrix (one IC per col) because lengths may be different.
+      # But perhaps it could be a long dataframe instead, with an extra column to denote fold.
+      # TODO: figure out why this can generate NaNs
+      influence_curves =
+        base::by(test_results, test_results$fold, function(fold_data) {
+        if (FALSE && verbose) {
+          with(fold_data,
+               cat("A:", length(A), "g1W_hat:", length(g1W_hat), "Y_star:", length(Y_star),
+                   "Q_star:", length(Q_star), "\n"))
+        }
+        # (Here in_quantile is A).
+        result = with(fold_data, (in_quantile / g_pred) * (y - q_star) +
+                        q_star - mean(q_star, na.rm = TRUE))
+        result
+      })
+
+      # Calculate SEs
+
+    }
+
 
   }
   results = list(weight_dfs = weight_dfs)
