@@ -24,6 +24,9 @@ combine_test_results =
 
   #browser()
 
+  # Dataframe to contain results.
+  results_df = NULL
+
   # Loop over exposure groups.
   for (group_i in seq(length(exposure_groups))) {
 
@@ -48,6 +51,7 @@ combine_test_results =
     }
 
     ################
+
     # Loop over mixture quantiles
     for (quantile_i in seq(quantiles_mixtures)) {
 
@@ -129,12 +133,49 @@ combine_test_results =
         result
       })
 
+      # Calculate fold sizes.
+
+      # Calculate IC variances.
+      ic_vars = sapply(influence_curves, var)
+
       # Calculate SEs
+      std_errs = lapply(influence_curves, function(ic) {
+        var(ic) / length(ic)
+      })
+
+      # Calculate combined SE.
+      std_err = sqrt(mean(ic_vars) / nrow(test_results))
+
+      # Calculate exposure-specific mean.
+      psi = mean(thetas)
+
+      # Calculate CI
+      ci_lower = psi - 1.96 * std_err
+      ci_upper = psi + 1.96 * std_err
+
+      # Calculate P-value (two-sided).
+
+      # Compile results into a one-row dataframe.
+      new_results =
+        data.frame(exposure_group = group_i,
+                   quantile = quantile_i,
+                   psi = psi,
+                   std_err = std_err,
+                   # TODO: fill in these values.
+                   ci_lower = ci_lower,
+                   ci_upper = ci_upper,
+                   p_value = NA)
+
+      # Add results to dataframe.
+      results_df = rbind(results_df, new_results)
 
     }
 
 
   }
-  results = list(weight_dfs = weight_dfs)
+  results = list(weight_dfs = weight_dfs,
+                 results = results_df
+                 # TODO: what other results?
+                 )
   return(results)
 }
