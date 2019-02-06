@@ -134,6 +134,7 @@ ggplot(data = data.frame(mixture, y = data$y),
 result$combined$results
 plot_df = result$combined$results
 
+# Quantile plot.
 ggplot(data = plot_df, aes(x = quantile, y = psi)) +
   geom_point() +
   geom_errorbar(aes(ymin = ci_lower, ymax = ci_upper), width = 0.2) +
