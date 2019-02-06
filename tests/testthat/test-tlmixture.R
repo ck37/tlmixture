@@ -105,13 +105,37 @@ quantiles_mixtures = 3L
 result = tlmixture(data, outcome = "y",
                    exposures = exposures,
                    quantiles_exposures = quantiles_exposures,
-                   quantiles_mixtures = quantiles_mixtures,
+                   #quantiles_mixtures = quantiles_mixtures,
+                   quantiles_mixtures = 5,
                    estimator_outcome = estimators,
                    cluster_exposures = cluster_exposures,
-                   folds_cvtmle = folds_cvtmle, verbose = verbose)
+                   #folds_cvtmle = folds_cvtmle,
+                   #folds_cvtmle = 3,
+                   folds_cvtmle = 20,
+                   verbose = FALSE)
 
 # Weight results for the first (and only) exposure group.
 result$combined$weight_dfs[[1]]
+(avg_wgts = colMeans(result$combined$weight_dfs[[1]]))
+
+qplot(data$e1)
+qplot(data$e2)
+
+# Calculate estimated mixture from the average weights.
+mixture = as.vector(as.matrix(data[, exposures]) %*% matrix(avg_wgts, ncol = 1L))
+# Plot the mixture versus risk.
+ggplot(data = data.frame(mixture, y = data$y),
+       aes(x = mixture, y = y)) + geom_smooth() + theme_minimal() +
+  labs(x = "Estimated mixture")
+# TODO: add in quantile lines or something.
+
+result$combined$results
+plot_df = result$combined$results
+library(ggplot2)
+ggplot(data = plot_df, aes(x = quantile, y = psi)) +
+  geom_point() +
+  geom_errorbar(aes(ymin = ci_lower, ymax = ci_upper), width = 0.2) +
+  theme_minimal()
 
 # Compare to weighted quantile sum.
 if (FALSE) {
