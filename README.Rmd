@@ -24,8 +24,8 @@ The goal of tlmixture is to ...
 You can install the development version of tlmixture from GitHub:
 
 ``` r
-library(devtools)
-install_github("ck37/tlmixture")
+install.packages("remotes")
+remotes::install_github("ck37/tlmixture")
 ```
 
 ## Example
