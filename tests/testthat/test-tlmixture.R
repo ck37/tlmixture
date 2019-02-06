@@ -118,6 +118,8 @@ result = tlmixture(data, outcome = "y",
 result$combined$weight_dfs[[1]]
 (avg_wgts = colMeans(result$combined$weight_dfs[[1]]))
 
+library(ggplot2)
+
 qplot(data$e1)
 qplot(data$e2)
 
@@ -131,7 +133,7 @@ ggplot(data = data.frame(mixture, y = data$y),
 
 result$combined$results
 plot_df = result$combined$results
-library(ggplot2)
+
 ggplot(data = plot_df, aes(x = quantile, y = psi)) +
   geom_point() +
   geom_errorbar(aes(ymin = ci_lower, ymax = ci_upper), width = 0.2) +

@@ -16,6 +16,7 @@ RoxygenNote: 6.1.1
 Suggests: 
     testthat,
     MASS,
+    ggplot2,
     gWQS,
     glmnet
 Imports: 
