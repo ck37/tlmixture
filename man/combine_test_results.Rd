@@ -11,9 +11,9 @@ combine_test_results(result, family, quantiles_mixtures, verbose = FALSE)
 
 \item{family}{tbd}
 
-\item{verbose}{tbd}
+\item{quantiles_mixtures}{tbd}
 
-\item{quantile_mixtures}{tbd}
+\item{verbose}{tbd}
 }
 \description{
 Combine test results

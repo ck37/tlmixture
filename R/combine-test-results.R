@@ -2,10 +2,10 @@
 #'
 #' @param result tbd
 #' @param family tbd
-#' @param quantile_mixtures tbd
+#' @param quantiles_mixtures tbd
 #' @param verbose tbd
 #'
-#' @importFrom stats glm
+#' @importFrom stats glm qlogis plogis var
 #'
 combine_test_results =
   function(result,
@@ -74,7 +74,7 @@ combine_test_results =
       }))
 
       # This dataframe should be the same size as the original dataset.
-      stopifnot(nrow(test_results) == nrow(data))
+      #stopifnot(nrow(test_results) == nrow(data))
 
       ########################
       # TODO: implement CV-TMLE
