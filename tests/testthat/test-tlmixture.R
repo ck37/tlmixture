@@ -110,6 +110,9 @@ result = tlmixture(data, outcome = "y",
                    cluster_exposures = cluster_exposures,
                    folds_cvtmle = folds_cvtmle, verbose = verbose)
 
+# Weight results for the first (and only) exposure group.
+result$combined$weight_dfs[[1]]
+
 # Compare to weighted quantile sum.
 if (FALSE) {
   if (requireNamespace("gWQS", quietly = TRUE)) {

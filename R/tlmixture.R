@@ -12,10 +12,12 @@
 #' (default 4).
 #'
 #' @param folds_cvtmle Number of CV-TMLE folds (default 2).
+# TODO: support arbitrary estimators (sl3, mlr, etc.)
 #' @param estimator_outcome SuperLearner library for outcome estimation.
+# TODO: support arbitrary estimators (sl3, mlr, etc.)
 #' @param estimator_propensity SuperLearner library for propensity estimation.
 #' @param cluster_exposures Whether to automatically cluster a vector of exposures into
-#' sub-groups (default false, TRUE not yet supported).
+#' sub-groups (default FALSE, TRUE not yet supported).
 #' @param verbose If TRUE, display more detailed info during execution.
 #'
 #' @export

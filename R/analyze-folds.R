@@ -42,9 +42,13 @@ analyze_folds =
       cat("Exposure groups to analyze:", length(exposure_groups), "\n")
     }
 
-    # Loop over exposure groups.
     weights = list()
+
+    # Quantile cutpoints for the mixture.
     cutpoints = list()
+    test_results = list()
+
+    # Loop over exposure groups.
     for (group_i in seq_along(exposure_groups)) {
 
       exposure_names = exposure_groups[[group_i]]
@@ -66,8 +70,12 @@ analyze_folds =
 
       weights[[group_i]] = result$weights
 
+
+      # Create mixture on the training data.
       mixture_train = as.vector(as.matrix(data_train[, exposure_names]) %*%
                                   matrix(result$weights, ncol = 1))
+
+      # Create mixture on the test data.
       mixture_test = as.vector(as.matrix(data_train[, exposure_names]) %*%
                                  matrix(result$weights, ncol = 1))
 
@@ -89,6 +97,7 @@ analyze_folds =
       vars = setdiff(names(data_train), c(outcome, exposure_names))
       df_outcome_reg = cbind(data_train[, vars],
                              # Mixture_bins is a factor but we just need the integer codes.
+                             # TODO: perhaps this should be one-hot encoded instead?
                              mixture_bins = as.integer(mixture_bins))
 
       # Estimate pooled outcome regression that includes all of the quantiles.
@@ -105,7 +114,12 @@ analyze_folds =
         print(reg_outcome)
       }
 
+      # We can save the propensity estimators for each quantile.
+      # Note though, that we are directly applying to test data so saving
+      # seems pretty optional. Yet may be useful for later analysis.
       regs_propensity = list()
+
+      test_result_df = NULL
 
       # Loop over bins.
       for (bin_i in seq(quantiles_mixtures)) {
@@ -172,18 +186,34 @@ analyze_folds =
         # is_current_bin = A (treatment indicator).
         haw = is_current_bin * h1w
 
-        # Create dataframe of results.
+
+        # NOTE: we don't calculate IC here because we need to do CV-TMLE fluctuation
+        # using all folds' results (later).
+
+        # Create dataframe of results for this mixture quantile.
+        new_result = data.frame(quantile = bin_i,
+                                # TODO: calculate and return Y_star
+                                # This is our A for this quantile.
+                                in_quantile = is_current_bin,
+                                q_pred, g_pred, h1w, haw)
+
+        # Append to our tracking dataframe.
+        test_result_df = rbind(test_result_df, new_result)
 
       }
+
+      # Save the stacked set of mixture quantile results for this exposure group.
+      test_results[[group_i]] = test_result_df
     }
 
-    ##################
-    # Analyze test set.
-
     # Compile results.
-    results = list(weights = weights,
-                   exposure_groups = exposure_groups,
-                   cutpoints = cutpoints)
+    results =
+      list(weights = weights,
+           # Contains the exposure groups that we created on the training data.
+           # (Not yet implemented)
+           exposure_groups = exposure_groups,
+           test_results = test_results,
+           cutpoints = cutpoints)
 
     return(results)
 

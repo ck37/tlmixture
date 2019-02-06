@@ -6,10 +6,10 @@ combine_test_results =
            verbose = FALSE) {
 
 
-
   # Hopefully we get the same number of groups for each training fold.
   # But if it's data-adaptive then we could get different results across folds.
   # TODO: talk about this scenario with Alan.
+  # (Perhaps we can somehow ensure/constrain that we get the same # of groups?)
   exposure_groups = result[[1]]$exposure_groups
 
   weight_dfs = list()

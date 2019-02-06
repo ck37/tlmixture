@@ -28,7 +28,7 @@ a vector of pre-clustered exposures.}
 \item{estimator_propensity}{SuperLearner library for propensity estimation.}
 
 \item{cluster_exposures}{Whether to automatically cluster a vector of exposures into
-sub-groups (default false, TRUE not yet supported).}
+sub-groups (default FALSE, TRUE not yet supported).}
 
 \item{verbose}{If TRUE, display more detailed info during execution.}
 
