@@ -125,7 +125,7 @@ qplot(data$e2)
 mixture = as.vector(as.matrix(data[, exposures]) %*% matrix(avg_wgts, ncol = 1L))
 # Plot the mixture versus risk.
 ggplot(data = data.frame(mixture, y = data$y),
-       aes(x = mixture, y = y)) + geom_smooth() + theme_minimal() +
+       aes(x = mixture, y = y)) + geom_point() + geom_smooth(se = FALSE) + theme_minimal() +
   labs(x = "Estimated mixture")
 # TODO: add in quantile lines or something.
 
