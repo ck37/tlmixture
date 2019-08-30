@@ -1,0 +1,53 @@
+---
+title: "Mixtures workshop"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Mixtures workshop analysis (2015)
+
+See https://www.niehs.nih.gov/news/events/pastmtg/2015/statistical/index.cfm
+
+## Simulated Dataset 1
+
+```{r}
+data = rio::import("data/niehs-2015-dataset1.xls")
+str(data)
+
+library(tlmixture)
+#folds_cvtmle = 2L
+folds_cvtmle = 5L
+estimators = c("SL.mean", "SL.glmnet")
+cluster_exposures = FALSE
+verbose = TRUE
+quantiles_exposures = 4L
+quantiles_mixtures = 3L
+
+names(data)
+(exposures = paste0("X", 1:7))
+class(data)
+
+df = data[, !names(data) %in% "obs"]
+str(df)
+
+# Create a noise z2 - temporary.
+# TODO: fix tlmixture to work with 1 or 0 adjustment variables.
+df$z2 = rnorm(nrow(df))
+
+result = tlmixture(df, outcome = "Y",
+                   exposures = exposures,
+                   quantiles_exposures = quantiles_exposures,
+                   #quantiles_mixtures = quantiles_mixtures,
+                   quantiles_mixtures = 5,
+                   estimator_outcome = estimators,
+                   cluster_exposures = cluster_exposures,
+                   #folds_cvtmle = folds_cvtmle,
+                   folds_cvtmle = 3,
+                   #folds_cvtmle = 20,
+                   verbose = TRUE)
+```
+
+## Simulated Dataset 2
