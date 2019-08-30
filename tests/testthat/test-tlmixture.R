@@ -99,19 +99,23 @@ folds_cvtmle = 5L
 estimators = c("SL.mean", "SL.glmnet")
 cluster_exposures = FALSE
 verbose = TRUE
+# Not currently used.
 quantiles_exposures = 4L
 quantiles_mixtures = 3L
 
 result = tlmixture(data, outcome = "y",
                    exposures = exposures,
+                   # This isn't being used currently.
                    quantiles_exposures = quantiles_exposures,
                    #quantiles_mixtures = quantiles_mixtures,
-                   quantiles_mixtures = 5,
+                   #quantiles_mixtures = 5,
+                   quantiles_mixtures = 4,
                    estimator_outcome = estimators,
                    cluster_exposures = cluster_exposures,
                    #folds_cvtmle = folds_cvtmle,
                    #folds_cvtmle = 3,
-                   folds_cvtmle = 20,
+                   #folds_cvtmle = 20,
+                   folds_cvtmle = 5,
                    verbose = FALSE)
 
 # Weight results for the first (and only) exposure group.
@@ -125,16 +129,30 @@ qplot(data$e2)
 
 # Calculate estimated mixture from the average weights.
 mixture = as.vector(as.matrix(data[, exposures]) %*% matrix(avg_wgts, ncol = 1L))
-# Plot the mixture versus risk.
+
+# Mixture distribution.
+# TODO: different types of histogram-like plots.
+qplot(mixture)
+
+# Plot the mixture versus risk - this looks pretty good!
 ggplot(data = data.frame(mixture, y = data$y),
-       aes(x = mixture, y = y)) + geom_point() + geom_smooth(se = FALSE) + theme_minimal() +
+       aes(x = mixture, y = y)) + geom_point() +
+  geom_smooth(se = FALSE, size = 0.2) +
+  geom_smooth(method = "lm", se = FALSE, color = "red", size = 0.1) +
+  theme_minimal() +
   labs(x = "Estimated mixture")
 # TODO: add in quantile lines or something.
+
+# TODO: Plot each mixture over the CV-TMLE folds.
 
 result$combined$results
 plot_df = result$combined$results
 
 # Quantile plot.
+# Looks good except for the highest quantile -
+# - is this due to too many CV-TMLE folds?
+# - or reduce the # of exposure quantiles?
+# Neither seems to help. Is this a bug?
 ggplot(data = plot_df, aes(x = quantile, y = psi)) +
   geom_point() +
   geom_errorbar(aes(ymin = ci_lower, ymax = ci_upper), width = 0.2) +
@@ -148,7 +166,7 @@ if (FALSE) {
     # This uses only 40% of the data for training by default, and 60% for validation.
     wqs = gWQS::gwqs(y ~ x1 + x2 + x3 + x4, mix_name = exposures,
                      data = data, family = "binomial")
-    # Doesn't seem that great: e1 is 0.33, e2 is 0.41, e3 is 0.26.
+    # Doesn't seem that great: e1 is 0.86, e2 is 0.10, e3 is 0.04.
     wqs$final_weights
 
 

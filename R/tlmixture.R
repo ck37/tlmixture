@@ -78,6 +78,10 @@ tlmixture =
     list(folds = fold_results,
          combined = combined_results,
          folds = folds,
+         outcome = outcome,
+         exposures = exposures,
+         quantiles_exposures = quantiles_exposures,
+         quantiles_mixtures = quantiles_mixtures,
          family = family)
 
   return(results)
