@@ -13,14 +13,55 @@ See https://www.niehs.nih.gov/news/events/pastmtg/2015/statistical/index.cfm
 
 ## Simulated Dataset 1
 
-```{r}
+### Import data
+
+```{r data1_import}
 data = rio::import("data/niehs-2015-dataset1.xls")
 str(data)
+
+task = list(
+  id = "obs",
+  exposures = paste0("X", 1:7),
+  outcome = "Y")
+
+task$covariates = setdiff(names(data), c(task$id, task$exposures, task$outcome))
+task
+```
+
+### Exploratory data analysis
+
+TODO: determine if we need to log-transform the data.
+
+```{r data1_eda}
+library(ggplot2)
+
+for (exposure in task$exposures) {
+  print(qplot(data[[exposure]]) + ggtitle(paste("Exposure:", exposure)) + theme_minimal())
+}
+
+
+# Log-transform the data.
+for (exposure in task$exposures) {
+  data[[exposure]] = log(data[[exposure]])
+}
+
+summary(data)
+
+for (exposure in task$exposures) {
+  print(qplot(data[[exposure]]) + ggtitle(paste("Exposure:", exposure)) + theme_minimal())
+}
+
+
+```
+
+### Estimation
+
+```{r data1_model}
 
 library(tlmixture)
 #folds_cvtmle = 2L
 folds_cvtmle = 5L
-estimators = c("SL.mean", "SL.glmnet")
+estimators = c("SL.mean", "SL.glmnet", "SL.ranger")
 cluster_exposures = FALSE
 verbose = TRUE
 quantiles_exposures = 4L
@@ -30,24 +71,44 @@ names(data)
 (exposures = paste0("X", 1:7))
 class(data)
 
-df = data[, !names(data) %in% "obs"]
+(exposures = paste0("X", 1:3))
+
+df = data[, !names(data) %in% task$id]
 str(df)
 
 # Create a noise z2 - temporary.
 # TODO: fix tlmixture to work with 1 or 0 adjustment variables.
 df$z2 = rnorm(nrow(df))
 
-result = tlmixture(df, outcome = "Y",
+result = tlmixture(df, outcome = task$outcome,
                    exposures = exposures,
                    quantiles_exposures = quantiles_exposures,
                    #quantiles_mixtures = quantiles_mixtures,
-                   quantiles_mixtures = 5,
+                   quantiles_mixtures = 4,
+                   #quantiles_mixtures = 5,
                    estimator_outcome = estimators,
                    cluster_exposures = cluster_exposures,
                    #folds_cvtmle = folds_cvtmle,
-                   folds_cvtmle = 3,
+                   #folds_cvtmle = 3,
+                   #folds_cvtmle = 5,
+                   folds_cvtmle = 10,
                    #folds_cvtmle = 20,
                    verbose = TRUE)
+```
+
+### Review results
+
+```{r data1_results}
+summary(result$outcome_rescaled)
+data[[result$outcome]] = result$outcome_rescaled
+# Analyze mixture distribution.
+# TODO: fix "unknown column" error due to rescaling of outcome variable.
+mix_result = analyze_mixture(data, result, name = "data1", reg_vars = task$covariates,
+                             vars_desc = task$covariates)
+
+# TODO: get plot_analysis() working.
+plot_analysis(mix_result)
+display_mixture(mix_result)
 ```
 
 ## Simulated Dataset 2

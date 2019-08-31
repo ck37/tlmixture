@@ -11,7 +11,7 @@ analyze_folds(splits, outcome, exposures, family, quantiles_mixtures,
 \arguments{
 \item{splits}{tbd}
 
-\item{outcome}{tbd}
+\item{outcome}{name of the outcome variable}
 
 \item{exposures}{tbd}
 
