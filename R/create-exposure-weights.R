@@ -1,7 +1,7 @@
 #' Create exposure weights
 #'
 #' @param data tbd
-#' @param outcome tbd
+#' @param outcome outcome column name
 #' @param exposures tbd
 #' @param quantiles tbd
 #' @param verbose tbd
@@ -9,15 +9,19 @@
 #' @importFrom stats as.formula as.formula binomial coef glm lm
 create_exposure_weights =
   function(data, outcome, exposures, quantiles, verbose = FALSE) {
+  if (verbose) {
+    cat("Create exposure weights.\n")
+  }
 
   # Let's use partial least squares for now.
-
   formula = as.formula(paste0(outcome, " ~ ."))
 
   # Only calculate the first component.
   # TODO: decide about incorporating adjustment variables and other exposures as well.
   # E.g. to residualize the outcome.
-  reg = pls::plsr(formula, data = data[, c(outcome, exposures)], ncomp = 1L)
+  reg = pls::plsr(formula,
+                  data = data[, c(outcome, exposures)],
+                  ncomp = 1L)
 
   # Extract the loadings for each component.
   # TODO: confirm we should use $loadings and not $loadings.weights (unclear what the difference is).

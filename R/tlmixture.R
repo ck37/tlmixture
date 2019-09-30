@@ -31,6 +31,7 @@ tlmixture =
            estimator_outcome = c("SL.mean", "SL.glmnet"),
            estimator_propensity = estimator_outcome,
            cluster_exposures = FALSE,
+           mixture_fn = create_exposure_weights,
            verbose = FALSE
            ) {
 
@@ -44,15 +45,58 @@ tlmixture =
     cat("Outcome family:", family, "\n")
   }
 
+
+  # Save bounds on the full Y variables for later transformation if Y is not binary.
+  # TODO: review tmle3 to see how it handles this rescaling.
+  if (family == "binomial" || length(unique(data[[outcome]])) == 2L) {
+    q_bounds = c(0, 1)
+  } else {
+    # This part is duplicated from the TMLE code in tmle_init_stage1.
+
+    # Define Qbounds just for continuous (non-binary) outcomes.
+    q_bounds = range(data[[outcome]], na.rm = TRUE)
+    # Extend bounds 10% beyond the observed range.
+    # NOTE: if one of the bounds is zero then it won't be extended.
+    q_bounds = q_bounds + 0.1 * c(-abs(q_bounds[1]), abs(q_bounds[2]))
+  }
+
+  # TODO: bound and transform outcome.
+  #oldY = data[[outcome]]
+  y_bounded = bound(data[[outcome]], q_bounds)
+
+  outcome_range = range(y_bounded, na.rm = TRUE)
+  # Ystar[is.na(Ystar)] <- 0
+
+  # This rescales the outcome to be \in [0, 1]
+  y_rescaled = (y_bounded - outcome_range[1]) / diff(outcome_range)
+
+  # TODO: confirm that max(y_rescaled) <= 1 and min(y_rescaled) >= 0
+
+  # Remove old version just to be safe.
+  data[[outcome]] = NULL
+
+
+  outcome_orig = outcome
+
+  # Use the transformed version of the outcome.
+  data[["Y_"]] = y_rescaled
+  outcome = "Y_"
+
+  if (verbose && family == "gaussian") {
+    cat("Rescaled outcome:\n")
+    print(summary(data[[outcome]]))
+  }
+
   # Setup cross-validation folds, stratified on the outcome.
   folds = rsample::vfold_cv(data, v = folds_cvtmle, strata = outcome)
-
 
   ##################
   # Loop over folds, analyzing training sets and then applying to test.
 
   fold_results =
-    purrr::map(folds$splits, analyze_folds, outcome = outcome, exposures = exposures,
+    purrr::map(folds$splits, analyze_folds,
+               outcome = outcome,
+               exposures = exposures,
                family = family,
                quantiles_mixtures = quantiles_mixtures,
                quantiles_exposures = quantiles_exposures,
@@ -79,6 +123,9 @@ tlmixture =
          combined = combined_results,
          folds = folds,
          outcome = outcome,
+         outcome_orig = outcome_orig,
+         outcome_bounds = q_bounds,
+         outcome_rescaled = data[[outcome]],
          exposures = exposures,
          quantiles_exposures = quantiles_exposures,
          quantiles_mixtures = quantiles_mixtures,

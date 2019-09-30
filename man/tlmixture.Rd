@@ -8,7 +8,7 @@ tlmixture(data, outcome, exposures, quantiles_mixtures = 3L,
   quantiles_exposures = 4L, folds_cvtmle = 2L, folds_sl = 2L,
   estimator_outcome = c("SL.mean", "SL.glmnet"),
   estimator_propensity = estimator_outcome, cluster_exposures = FALSE,
-  verbose = FALSE)
+  mixture_fn = create_exposure_weights, verbose = FALSE)
 }
 \arguments{
 \item{data}{Data frame with outcome, exposure, and adjustment variables.}

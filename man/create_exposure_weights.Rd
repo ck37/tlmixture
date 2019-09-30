@@ -10,7 +10,7 @@ create_exposure_weights(data, outcome, exposures, quantiles,
 \arguments{
 \item{data}{tbd}
 
-\item{outcome}{tbd}
+\item{outcome}{outcome column name}
 
 \item{exposures}{tbd}
 

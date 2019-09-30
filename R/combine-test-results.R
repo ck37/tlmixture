@@ -88,8 +88,10 @@ combine_test_results =
       # This is for a logistic fluctuation.
       # TODO: try alternative version at
       # https://github.com/ck37/varimpact/blob/master/R/estimate_pooled_results.R#L96-L106
-      reg = try(glm(y ~ -1 + offset(logit_q_hat) + haw,
-                    data = test_results, family = "binomial"))
+      # For continuous variables this will yield a warning:
+      # "In eval(family$initialize) : non-integer #successes in a binomial glm!"
+      reg = try(suppressWarnings(glm(y ~ -1 + offset(logit_q_hat) + haw,
+                    data = test_results, family = "binomial")))
       if ("try-error" %in% class(reg)) {
         cat("Error in epsilon rgression.\n")
         browser()

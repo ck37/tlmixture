@@ -1,7 +1,7 @@
 #' This function will be called from tlmixture() on each CV-TMLE split.
 #'
 #' @param splits tbd
-#' @param outcome tbd
+#' @param outcome name of the outcome variable
 #' @param exposures tbd
 #' @param family tbd
 #' @param quantiles_mixtures tbd
@@ -109,6 +109,7 @@ analyze_folds =
       # plus the outcome variable, and add in the mixture bins.
       # TODO: determine if we do want to include the other exposure groups.
       vars = setdiff(names(data_train), c(outcome, exposure_names))
+      #vars = setdiff(names(data_train), exposure_names)
       df_outcome_reg = cbind(data_train[, vars],
                              # Mixture_bins is a factor but we just need the integer codes.
                              # TODO: perhaps this should be one-hot encoded instead?
@@ -196,7 +197,12 @@ analyze_folds =
           g_pred = predict(reg_propensity, df_propensity, type = "response")
         }
 
-        # TODO: Trunctate g_hat
+        # TODO: make g_min a function argument.
+        g_min = 0.00001
+
+        # Trunctate g_hat
+        g_pred = bound(g_pred, c(g_min, 1 - g_min))
+
 
         # Create clever covariate
         h1w = 1 / g_pred
