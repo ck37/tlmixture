@@ -80,7 +80,9 @@ combine_test_results =
       # TODO: implement CV-TMLE
 
       # From tmle::estimateQ.
+      # TODO: fix warning "NaNs produced"
       test_results$logit_q_hat = qlogis(test_results$q_pred)
+      # TODO: stop if all results are NAs.
 
       # Estimate epsilon
       # This is for a logistic fluctuation.
