@@ -23,6 +23,7 @@ analyze_folds =
            quantiles_exposures,
            estimator_outcome,
            estimator_propensity,
+           mixture_fn,
            cluster_exposures,
            folds_sl = 2L,
            verbose = FALSE) {
@@ -76,24 +77,30 @@ analyze_folds =
 
       # Create exposure weights, hopefully resulting in a convex combination or
       # something similar.
-      result = create_exposure_weights(data_train,
-                                       outcome,
-                                       exposures = exposure_names,
-                                       quantiles = exp_quantiles,
-                                       verbose = verbose)
+      #result = create_exposure_weights(data_train,
+      result = mixture_fn(data_train,
+                          outcome,
+                          exposures = exposure_names,
+                          quantiles = exp_quantiles,
+                          verbose = verbose)
 
       weights[[group_i]] = result$weights
 
 
       # Create mixture on the training data.
-      mixture_train = as.vector(as.matrix(data_train[, exposure_names]) %*%
-                                  matrix(result$weights, ncol = 1))
+      mixture_train = predict(result, data_train)
+
+      # original version.
+      #mixture_train = as.vector(as.matrix(data_train[, exposure_names]) %*%
+      #                            matrix(result$weights, ncol = 1))
 
       # Create mixture on the test data.
-      mixture_test = as.vector(as.matrix(data_test[, exposure_names]) %*%
-                                 matrix(result$weights, ncol = 1))
+      mixture_test = predict(result, data_test)
+      #mixture_test = as.vector(as.matrix(data_test[, exposure_names]) %*%
+      #                           matrix(result$weights, ncol = 1))
 
       # Eventually: do targeted learning estimation.
+      #browser()
 
       # Calculate quantiles to discretize the continuous mixture.
       quantiles = quantile(mixture_train,
@@ -102,6 +109,7 @@ analyze_folds =
 
       # Discretize into quantiles (quantiles_mixtures)
       # If we don't set include.lowest = TRUE then the lowest obs will have an NA.
+      # TODO: can generate error - quantiles are not unique.
       mixture_bins = cut(mixture_train, breaks = quantiles, include.lowest = TRUE)
       mixture_bins_test = cut(mixture_test, breaks = quantiles, include.lowest = TRUE)
 
@@ -215,6 +223,8 @@ analyze_folds =
         # TODO: use actual adjustment for missingness, or another solution.
         test_treatment_indicator[is.na(test_treatment_indicator)] = 0L
 
+        #browser()
+
         haw = test_treatment_indicator * h1w
 
         # Confirm we have no NAs in our haw vector.
@@ -235,6 +245,9 @@ analyze_folds =
         test_result_df = rbind(test_result_df, new_result)
 
       }
+
+      # Save mixture prediction on stacked test data.
+      test_result_df[[paste0("mixture_", group_i)]] = mixture_test
 
       # Save the stacked set of mixture quantile results for this exposure group.
       test_results[[group_i]] = test_result_df

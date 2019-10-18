@@ -1,5 +1,6 @@
 library(testthat)
 library(tlmixture)
+library(ggplot2)
 
 # Create a simple simulated dataset.
 
@@ -103,21 +104,24 @@ verbose = TRUE
 quantiles_exposures = 4L
 quantiles_mixtures = 3L
 
-result = tlmixture(data, outcome = "y",
-                   exposures = exposures,
-                   # This isn't being used currently.
-                   quantiles_exposures = quantiles_exposures,
-                   #quantiles_mixtures = quantiles_mixtures,
-                   #quantiles_mixtures = 5,
-                   quantiles_mixtures = 4,
-                   estimator_outcome = estimators,
-                   cluster_exposures = cluster_exposures,
-                   #folds_cvtmle = folds_cvtmle,
-                   #folds_cvtmle = 3,
-                   #folds_cvtmle = 20,
-                   folds_cvtmle = 5,
-                   verbose = FALSE)
-
+result =
+  tlmixture(data, outcome = "y",
+            exposures = exposures,
+            # This isn't being used currently.
+            quantiles_exposures = quantiles_exposures,
+            #quantiles_mixtures = quantiles_mixtures,
+            #quantiles_mixtures = 5,
+            #quantiles_mixtures = 4,
+            quantiles_mixtures = 3,
+            estimator_outcome = estimators,
+            cluster_exposures = cluster_exposures,
+            mixture_fn = tlmixture::mixture_sl,
+            #folds_cvtmle = folds_cvtmle,
+            #folds_cvtmle = 3,
+            #folds_cvtmle = 20,
+            folds_cvtmle = 5,
+            verbose = FALSE)
+result
 # Weight results for the first (and only) exposure group.
 result$combined$weight_dfs[[1]]
 (avg_wgts = colMeans(result$combined$weight_dfs[[1]]))

@@ -5,7 +5,7 @@
 \title{This function will be called from tlmixture() on each CV-TMLE split.}
 \usage{
 analyze_folds(splits, outcome, exposures, family, quantiles_mixtures,
-  quantiles_exposures, estimator_outcome, estimator_propensity,
+  quantiles_exposures, estimator_outcome, estimator_propensity, mixture_fn,
   cluster_exposures, folds_sl = 2L, verbose = FALSE)
 }
 \arguments{

@@ -33,6 +33,8 @@ combine_test_results =
     ###############
     #  Create a dataframe with a row for each fold and each column in the weight.
 
+    # This doesn't work for SL currently.
+    if (FALSE) {
     weights = data.frame(t(sapply(result, function(fold_i) {
       # Return the weights for this group, across all training folds.
       fold_i$weights[[group_i]]
@@ -48,6 +50,7 @@ combine_test_results =
       print(weights)
       cat("\nAverage normalized weights:\n")
       print(colMeans(weights))
+    }
     }
 
     ################
@@ -177,7 +180,7 @@ combine_test_results =
 
 
   }
-  results = list(weight_dfs = weight_dfs,
+  results = list(weight_dfs = NULL, #weight_dfs,
                  results = results_df
                  # TODO: what other results?
                  )

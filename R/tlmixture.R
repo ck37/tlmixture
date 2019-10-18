@@ -103,6 +103,7 @@ tlmixture =
                folds_sl = folds_sl,
                estimator_outcome = estimator_outcome,
                estimator_propensity = estimator_propensity,
+               mixture_fn = mixture_fn,
                cluster_exposures = cluster_exposures,
                verbose = verbose)
 

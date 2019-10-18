@@ -3,6 +3,7 @@
 export(analyze_mixture)
 export(bound)
 export(display_mixture)
+export(mixture_sl)
 export(outcome_family)
 export(plot_analysis)
 export(tlmixture)
