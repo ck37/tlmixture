@@ -1,4 +1,4 @@
-#' Create exposure weights
+#' Create exposure weights using partial least squares
 #'
 #' @param data tbd
 #' @param outcome outcome column name
@@ -7,7 +7,9 @@
 #' @param verbose tbd
 #'
 #' @importFrom stats as.formula as.formula binomial coef glm lm
-create_exposure_weights =
+#'
+#' @export
+mixture_pls =
   function(data, outcome, exposures, quantiles, verbose = FALSE) {
   if (verbose) {
     cat("Create exposure weights.\n")
@@ -51,7 +53,8 @@ create_exposure_weights =
   }
 
   # Return the normalized weights.
-  results = list(weights = weights_norm)
+  # TODO: also consider saving the quantiling parameter, if it's implemented.
+  results = list(weights = weights_norm, exposures = exposures)
 
   # Don't use this for now - could be a separate function.
   if (FALSE) {
@@ -80,6 +83,23 @@ create_exposure_weights =
                      data_b[, cov_name, drop = FALSE])
   }
 
+  class(results) = "mixture_pls"
 
   return(results)
 }
+
+# TODO: document with roxygen
+#' prediction for mixture_pls object
+#' @param obj tbd
+#' @param data tbd
+#'
+#' @export
+predict.mixture_pls = function(obj, data) {
+  # Return predicted mixture
+  mixture = as.vector(as.matrix(data[, obj$exposures]) %*%
+                      matrix(obj$weights, ncol = 1))
+
+  return(mixture)
+}
+
+
