@@ -4,9 +4,17 @@
 \alias{analyze_mixture}
 \title{Analyze mixture}
 \usage{
-analyze_mixture(data, tlmixture_result, plots = TRUE, span = 0.9,
-  vars_desc = NULL, name = "exposures", weight_var = NULL,
-  round_digits = 4, reg_vars = NULL)
+analyze_mixture(
+  data,
+  tlmixture_result,
+  plots = TRUE,
+  span = 0.9,
+  vars_desc = NULL,
+  name = "exposures",
+  weight_var = NULL,
+  round_digits = 4,
+  reg_vars = NULL
+)
 }
 \description{
 Analyze mixture

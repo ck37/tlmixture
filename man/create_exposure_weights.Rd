@@ -4,8 +4,7 @@
 \alias{create_exposure_weights}
 \title{Create exposure weights}
 \usage{
-create_exposure_weights(data, outcome, exposures, quantiles,
-  verbose = FALSE)
+create_exposure_weights(data, outcome, exposures, quantiles, verbose = FALSE)
 }
 \arguments{
 \item{data}{tbd}

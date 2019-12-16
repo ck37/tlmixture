@@ -4,8 +4,15 @@
 \alias{mixture_sl}
 \title{Create exposure weights}
 \usage{
-mixture_sl(data, outcome, exposures, quantiles, family = "binomial",
-  verbose = FALSE, sl_library = c("SL.mean", "SL.glm"))
+mixture_sl(
+  data,
+  outcome,
+  exposures,
+  quantiles,
+  family = "binomial",
+  verbose = FALSE,
+  sl_library = c("SL.mean", "SL.glm")
+)
 }
 \arguments{
 \item{data}{tbd}
