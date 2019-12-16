@@ -37,8 +37,9 @@ library(tlmixture)
 
 # Basic example code
 result =
-            # dataframe containing outcome, exposures, and adjustment variables.
-  tlmixture(data,
+  tlmixture(
+            # Dataframe containing outcome, exposures, and adjustment variables.
+            data,
             # Name of the outcome variable.
             outcome = "y",
             # Vector of exposure names (single group), or a list with separate vectors per group.
