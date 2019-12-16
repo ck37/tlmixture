@@ -42,6 +42,9 @@ analyze_folds =
     if (cluster_exposures) {
       # TBD.
       exposure_groups = NA
+    } else if (is.list(exposures)) {
+      # Exposures is already a list with each element being a group.
+      exposure_groups = exposures
     } else {
 
       # Single group with all of the exposures.
@@ -88,6 +91,7 @@ analyze_folds =
 
 
       # Create mixture on the training data.
+      # TODO: support predict() in the pls version.
       mixture_train = predict(result, data_train)
 
       # original version.
@@ -98,9 +102,6 @@ analyze_folds =
       mixture_test = predict(result, data_test)
       #mixture_test = as.vector(as.matrix(data_test[, exposure_names]) %*%
       #                           matrix(result$weights, ncol = 1))
-
-      # Eventually: do targeted learning estimation.
-      #browser()
 
       # Calculate quantiles to discretize the continuous mixture.
       quantiles = quantile(mixture_train,
