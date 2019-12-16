@@ -13,18 +13,26 @@ Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.0.2
+VignetteBuilder: knitr
 Suggests: 
-    testthat,
-    MASS,
-    ggplot2,
+    here,
     gWQS,
-    glmnet
+    glmnet,
+    knitr,
+    MASS,
+    rio,
+    testthat
 Imports: 
+    dplyr,
+    ggplot2,
+    ggrepel,
+    Hmisc,
+    kableExtra,
     magrittr,
     purrr,
     rsample,
     Rsolnp,
     pls,
-    dplyr
+    tidyr
 Depends:
     SuperLearner

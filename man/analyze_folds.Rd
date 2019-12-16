@@ -36,6 +36,8 @@ analyze_folds(
 
 \item{estimator_propensity}{tbd}
 
+\item{mixture_fn}{tbd}
+
 \item{cluster_exposures}{tbd}
 
 \item{folds_sl}{tbd}

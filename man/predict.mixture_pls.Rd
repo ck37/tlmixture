@@ -4,12 +4,14 @@
 \alias{predict.mixture_pls}
 \title{prediction for mixture_pls object}
 \usage{
-\method{predict}{mixture_pls}(obj, data)
+\method{predict}{mixture_pls}(object, data, ...)
 }
 \arguments{
-\item{obj}{tbd}
+\item{object}{tbd}
 
 \item{data}{tbd}
+
+\item{...}{tbd}
 }
 \description{
 prediction for mixture_pls object

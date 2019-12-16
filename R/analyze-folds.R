@@ -8,6 +8,7 @@
 #' @param quantiles_exposures tbd
 #' @param estimator_outcome tbd
 #' @param estimator_propensity tbd
+#' @param mixture_fn tbd
 #' @param cluster_exposures tbd
 #' @param folds_sl tbd
 #' @param verbose tbd

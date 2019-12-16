@@ -90,14 +90,15 @@ mixture_pls =
 
 # TODO: document with roxygen
 #' prediction for mixture_pls object
-#' @param obj tbd
+#' @param object tbd
 #' @param data tbd
+#' @param ... tbd
 #'
 #' @export
-predict.mixture_pls = function(obj, data) {
+predict.mixture_pls = function(object, data, ...) {
   # Return predicted mixture
-  mixture = as.vector(as.matrix(data[, obj$exposures]) %*%
-                      matrix(obj$weights, ncol = 1))
+  mixture = as.vector(as.matrix(data[, object$exposures]) %*%
+                      matrix(object$weights, ncol = 1))
 
   return(mixture)
 }

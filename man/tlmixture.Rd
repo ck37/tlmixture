@@ -15,7 +15,7 @@ tlmixture(
   estimator_outcome = c("SL.mean", "SL.glmnet"),
   estimator_propensity = estimator_outcome,
   cluster_exposures = FALSE,
-  mixture_fn = create_exposure_weights,
+  mixture_fn = mixture_pls,
   verbose = FALSE
 )
 }
@@ -42,7 +42,9 @@ a vector of pre-clustered exposures.}
 \item{estimator_propensity}{SuperLearner library for propensity estimation.}
 
 \item{cluster_exposures}{Whether to automatically cluster a vector of exposures into
-sub-groups (default FALSE, TRUE not yet supported).}
+sub-groups (default FALSE; TRUE not yet supported).}
+
+\item{mixture_fn}{Current options: mixture_pls or mixture_sl}
 
 \item{verbose}{If TRUE, display more detailed info during execution.}
 }

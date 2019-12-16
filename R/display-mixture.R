@@ -1,5 +1,8 @@
 #' Display mixture
 #'
+#' @param analysis tbd
+#' @param digits tbd
+#'
 #' @export
 display_mixture = function(analysis, digits = 4) {
   tab2 = analysis$tab2

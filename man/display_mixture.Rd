@@ -6,6 +6,11 @@
 \usage{
 display_mixture(analysis, digits = 4)
 }
+\arguments{
+\item{analysis}{tbd}
+
+\item{digits}{tbd}
+}
 \description{
 Display mixture
 }

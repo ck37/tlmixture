@@ -18,7 +18,8 @@
 # TODO: support arbitrary estimators (sl3, mlr, etc.)
 #' @param estimator_propensity SuperLearner library for propensity estimation.
 #' @param cluster_exposures Whether to automatically cluster a vector of exposures into
-#' sub-groups (default FALSE, TRUE not yet supported).
+#' sub-groups (default FALSE; TRUE not yet supported).
+#' @param mixture_fn Current options: mixture_pls or mixture_sl
 #' @param verbose If TRUE, display more detailed info during execution.
 #'
 #' @export
@@ -31,7 +32,7 @@ tlmixture =
            estimator_outcome = c("SL.mean", "SL.glmnet"),
            estimator_propensity = estimator_outcome,
            cluster_exposures = FALSE,
-           mixture_fn = create_exposure_weights,
+           mixture_fn = mixture_pls,
            verbose = FALSE
            ) {
 

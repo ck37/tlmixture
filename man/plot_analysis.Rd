@@ -6,6 +6,9 @@
 \usage{
 plot_analysis(analysis)
 }
+\arguments{
+\item{analysis}{tbd}
+}
 \description{
 Plot analysis
 }

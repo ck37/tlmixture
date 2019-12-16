@@ -4,6 +4,8 @@
 #' @param outcome outcome column name
 #' @param exposures tbd
 #' @param quantiles tbd
+#' @param family tbd
+#' @param sl_library tbd
 #' @param verbose tbd
 #'
 #' @importFrom stats as.formula as.formula binomial coef glm lm
@@ -31,7 +33,12 @@ mixture_sl =
 }
 
 # TODO: document with roxygen
-predict.mixture_sl = function(obj, data) {
-  preds = predict(obj$sl, data, onlySL = TRUE)$pred[, 1]
+#' tbd
+#'
+#' @param object bd
+#' @param data tbd
+#' @param ... tbd
+predict.mixture_sl = function(object, data, ...) {
+  preds = predict(object$sl, data, onlySL = TRUE)$pred[, 1]
   return(preds)
 }

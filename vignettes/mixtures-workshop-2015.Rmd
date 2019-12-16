@@ -1,6 +1,11 @@
 ---
 title: "Mixtures workshop"
-output: html_document
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[utf8]{inputenc}
 ---
 
 ```{r setup, include=FALSE}
@@ -17,7 +22,7 @@ See https://www.niehs.nih.gov/news/events/pastmtg/2015/statistical/index.cfm
 ### Import data
 
 ```{r data1_import}
-data = rio::import("../data/niehs-2015-dataset1.xls")
+data = rio::import("../inst/extdata/niehs-2015-dataset1.xls")
 str(data)
 
 task = list(
@@ -120,7 +125,7 @@ display_mixture(mix_result)
 ### Import data
 
 ```{r data2_import}
-data = rio::import("../data/niehs-2015-dataset2.xls")
+data = rio::import("../inst/extdata/niehs-2015-dataset2.xls")
 str(data)
 
 names(data) = tolower(names(data))

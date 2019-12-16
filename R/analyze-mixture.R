@@ -1,5 +1,17 @@
 #' Analyze mixture
 #'
+#' @param data tbd
+#' @param tlmixture_result tbd
+#' @param plots tbd
+#' @param span tbd
+#' @param vars_desc tbd
+#' @param name tbd
+#' @param weight_var tbd
+#' @param round_digits tbd
+#' @param reg_vars tbd
+#'
+#' @importFrom dplyr filter group_by one_of n mutate_at vars summarize_at select
+#' @importFrom ggplot2 ggplot geom_point geom_smooth theme_minimal geom_errorbar aes labs theme qplot geom_vline theme_bw
 #' @export
 analyze_mixture =
   function(data, tlmixture_result,
@@ -33,8 +45,6 @@ analyze_mixture =
 
     data$mixture = mixture
     data$quantile = Hmisc::cut2(mixture, cuts = quants_full)
-
-    library(dplyr)
 
     tab = data %>%
       filter(!is.na(mixture)) %>%

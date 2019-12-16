@@ -23,7 +23,11 @@ mixture_sl(
 
 \item{quantiles}{tbd}
 
+\item{family}{tbd}
+
 \item{verbose}{tbd}
+
+\item{sl_library}{tbd}
 }
 \description{
 Create exposure weights

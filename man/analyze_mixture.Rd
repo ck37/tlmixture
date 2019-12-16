@@ -16,6 +16,25 @@ analyze_mixture(
   reg_vars = NULL
 )
 }
+\arguments{
+\item{data}{tbd}
+
+\item{tlmixture_result}{tbd}
+
+\item{plots}{tbd}
+
+\item{span}{tbd}
+
+\item{vars_desc}{tbd}
+
+\item{name}{tbd}
+
+\item{weight_var}{tbd}
+
+\item{round_digits}{tbd}
+
+\item{reg_vars}{tbd}
+}
 \description{
 Analyze mixture
 }

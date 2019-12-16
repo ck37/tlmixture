@@ -1,5 +1,9 @@
 #' Plot analysis
 #'
+#' @param analysis tbd
+#'
+#' @importFrom dplyr mutate if_else
+#' @importFrom ggplot2 ggplot aes geom_line theme_minimal theme element_blank expand_limits
 #' @export
 plot_analysis = function(analysis) {
 
