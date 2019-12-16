@@ -34,23 +34,30 @@ combine_test_results =
     #  Create a dataframe with a row for each fold and each column in the weight.
 
     # This doesn't work for SL currently.
-    if (FALSE) {
-    weights = data.frame(t(sapply(result, function(fold_i) {
-      # Return the weights for this group, across all training folds.
-      fold_i$weights[[group_i]]
-    })))
-    names(weights) = exposure_groups[[group_i]]
+    if ("weights" %in% names(result[[1]])) {
+      weights = data.frame(t(sapply(result, function(fold_i) {
+        # Return the weights for this group, across all training folds.
+        if (length(fold_i$weights) > 0) {
+          fold_i$weights[[group_i]]
+        } else {
+          NULL
+        }
+      })))
+      names(weights) = exposure_groups[[group_i]]
 
-    # Save this weight dataframe.
-    weight_dfs[[group_i]] = weights
+      # Save this weight dataframe.
+      weight_dfs[[group_i]] = weights
 
-    # Report on average weight across folds.
-    if (verbose) {
-      cat("\nWeight dataframe:\n")
-      print(weights)
-      cat("\nAverage normalized weights:\n")
-      print(colMeans(weights))
-    }
+      # Report on average weight across folds.
+      if (verbose) {
+        cat("\nWeight dataframe:\n")
+        print(weights)
+        cat("\nAverage normalized weights:\n")
+        print(colMeans(weights))
+      }
+    } else {
+      # Estimators that don't generate parametric vector of weights or coefficients.
+      weight_dfs[[group_i]] = NULL
     }
 
     ################
@@ -180,7 +187,8 @@ combine_test_results =
 
 
   }
-  results = list(weight_dfs = NULL, #weight_dfs,
+  results = list(#weight_dfs = NULL, #weight_dfs,
+                 weight_dfs = weight_dfs,
                  results = results_df
                  # TODO: what other results?
                  )
