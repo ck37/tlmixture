@@ -7,6 +7,7 @@
 #' @param verbose tbd
 #'
 #' @importFrom stats as.formula as.formula binomial coef glm lm
+#'
 #' @export
 mixture_sl =
   function(data, outcome, exposures, quantiles, family = "binomial", verbose = FALSE,
@@ -29,6 +30,7 @@ mixture_sl =
   return(results)
 }
 
+# TODO: document with roxygen
 predict.mixture_sl = function(obj, data) {
   preds = predict(obj$sl, data, onlySL = TRUE)$pred[, 1]
   return(preds)
