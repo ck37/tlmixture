@@ -49,7 +49,7 @@ result =
             # This SuperLearner library will be used for propensity too.
             estimator_outcome = c("SL.mean", "SL.glmnet", "SL.ranger")
             # How many CV-TMLE folds to use; more is better, but slower to compute.
-            folds_cvtmle = 5)
+            folds_cvtmle = 3)
 
 # Review parameter estimates and confidence intervals.
 result$combined$results
