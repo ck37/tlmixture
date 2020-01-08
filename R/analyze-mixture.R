@@ -46,6 +46,7 @@ analyze_mixture =
     data$mixture = mixture
     data$quantile = Hmisc::cut2(mixture, cuts = quants_full)
 
+    # First table examines the mixture and the outcome across the mixture quantiles.
     tab = data %>%
       filter(!is.na(mixture)) %>%
       group_by(quantile) %>%

@@ -22,6 +22,8 @@ mixture_glm =
   
   formula = as.formula(paste(outcome, "~ ."))
   
+  # TODO: standardize variables?
+  
   estimator =
     stats::glm(formula, data = data, family = family)
 

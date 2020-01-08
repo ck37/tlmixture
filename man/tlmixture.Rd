@@ -15,7 +15,7 @@ tlmixture(
   estimator_outcome = c("SL.mean", "SL.glmnet"),
   estimator_propensity = estimator_outcome,
   cluster_exposures = FALSE,
-  mixture_fn = mixture_pls,
+  mixture_fn = mixture_glm,
   verbose = FALSE
 )
 }
@@ -44,7 +44,7 @@ a vector of pre-clustered exposures.}
 \item{cluster_exposures}{Whether to automatically cluster a vector of exposures into
 sub-groups (default FALSE; TRUE not yet supported).}
 
-\item{mixture_fn}{Current options: mixture_pls or mixture_sl}
+\item{mixture_fn}{Current options: mixture_glm, mixture_pls, or mixture_sl}
 
 \item{verbose}{If TRUE, display more detailed info during execution.}
 }
