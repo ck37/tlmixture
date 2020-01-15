@@ -7,3 +7,5 @@
 ^tlmixture\.Rproj$
 ^\.Rproj\.user$
 ^R/wqs-helpers.R$
+^doc$
+^Meta$
