@@ -11,14 +11,13 @@ plot_analysis = function(analysis) {
   if (!is.null(analysis$tab3)) {
     df = analysis$tab3
     df$Weights = NULL
-    names(df) = paste0(1:4)
+    names(df) = paste0(seq(analysis$num_quantiles))
     df = cbind("var" = rownames(df), df)
     rownames(df) = NULL
     df
 
     # Convert to long format for plotting.
-    df_long = df %>% tidyr::gather(quartile, mean, as.character(1:4))
-    df_long
+    df_long = df %>% tidyr::gather(quartile, mean, as.character(seq(analysis$num_quantiles)))
 
     # Put labels at the end of the lines, via:
     # https://stackoverflow.com/questions/29357612/plot-labels-at-ends-of-lines

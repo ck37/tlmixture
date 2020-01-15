@@ -162,6 +162,7 @@ analyze_mixture =
                   mixture = mixture,
                   weights = avg_wgts,
                   name = name,
+                  num_quantiles = num_quantiles, # needed for plot_analysis()
                   reg = reg)
     return(result)
   }
