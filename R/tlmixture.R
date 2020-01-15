@@ -47,10 +47,13 @@ tlmixture =
   }
 
 
+  # TODO: move this rescaling into its own function.
+
   # Save bounds on the full Y variables for later transformation if Y is not binary.
   # TODO: review tmle3 to see how it handles this rescaling.
   if (family == "binomial" || length(unique(data[[outcome]])) == 2L) {
     q_bounds = c(0, 1)
+    needs_rescale = FALSE
   } else {
     # This part is duplicated from the TMLE code in tmle_init_stage1.
 
@@ -59,33 +62,39 @@ tlmixture =
     # Extend bounds 10% beyond the observed range.
     # NOTE: if one of the bounds is zero then it won't be extended.
     q_bounds = q_bounds + 0.1 * c(-abs(q_bounds[1]), abs(q_bounds[2]))
+    needs_rescale = TRUE
   }
 
-  # TODO: bound and transform outcome.
-  #oldY = data[[outcome]]
-  y_bounded = bound(data[[outcome]], q_bounds)
+  # Bound and transform outcome.
+  if (needs_rescale) {
+    #oldY = data[[outcome]]
+    y_bounded = bound(data[[outcome]], q_bounds)
 
-  outcome_range = range(y_bounded, na.rm = TRUE)
-  # Ystar[is.na(Ystar)] <- 0
+    outcome_range = range(y_bounded, na.rm = TRUE)
+    # Ystar[is.na(Ystar)] <- 0
 
-  # This rescales the outcome to be \in [0, 1]
-  y_rescaled = (y_bounded - outcome_range[1]) / diff(outcome_range)
+    # This rescales the outcome to be \in [0, 1]
+    y_rescaled = (y_bounded - outcome_range[1]) / diff(outcome_range)
 
-  # TODO: confirm that max(y_rescaled) <= 1 and min(y_rescaled) >= 0
+    # TODO: confirm that max(y_rescaled) <= 1 and min(y_rescaled) >= 0
 
-  # Remove old version just to be safe.
-  data[[outcome]] = NULL
+    # Remove old version just to be safe.
+    data[[outcome]] = NULL
 
 
-  outcome_orig = outcome
+    outcome_orig = outcome
 
-  # Use the transformed version of the outcome.
-  data[["Y_"]] = y_rescaled
-  outcome = "Y_"
+    # Use the transformed version of the outcome.
+    data[["Y_"]] = y_rescaled
+    outcome = "Y_"
 
-  if (verbose && family == "gaussian") {
-    cat("Rescaled outcome:\n")
-    print(summary(data[[outcome]]))
+    if (verbose && family == "gaussian") {
+      cat("Rescaled outcome:\n")
+      print(summary(data[[outcome]]))
+    }
+
+  } else {
+    outcome_orig = NULL
   }
 
   # Setup cross-validation folds, stratified on the outcome.
@@ -131,6 +140,7 @@ tlmixture =
          exposures = exposures,
          quantiles_exposures = quantiles_exposures,
          quantiles_mixtures = quantiles_mixtures,
+         rescaled = needs_rescale,
          family = family)
 
   return(results)
