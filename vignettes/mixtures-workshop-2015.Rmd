@@ -126,7 +126,9 @@ summary(result$outcome_rescaled)
 data[[result$outcome]] = result$outcome_rescaled
 # Analyze mixture distribution.
 # TODO: fix "unknown column" error due to rescaling of outcome variable.
-mix_result = analyze_mixture(data, result, name = "data1", reg_vars = task$covariates,
+mix_result = analyze_mixture(data, result,
+                             name = "Dataset 1",
+                             reg_vars = task$covariates,
                              vars_desc = task$covariates)
 
 # TODO: get plot_analysis() working.
@@ -136,7 +138,7 @@ weight_df = do.call(rbind, sapply(result$folds, `[[`, "weights"))
 colMeans(weight_df)
 ```
 
-```{r results="asis"}
+```{r data1_display, results="asis"}
 display_mixture(mix_result)
 ```
 
@@ -239,7 +241,9 @@ summary(result$outcome_rescaled)
 data[[result$outcome]] = result$outcome_rescaled
 # Analyze mixture distribution.
 # TODO: fix "unknown column" error due to rescaling of outcome variable.
-mix_result = analyze_mixture(data, result, name = "data1", reg_vars = task$covariates,
+mix_result = analyze_mixture(data, result,
+                             name = "Dataset 2",
+                             reg_vars = task$covariates,
                              vars_desc = task$covariates)
 
 # TODO: get plot_analysis() working.
