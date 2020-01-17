@@ -113,6 +113,22 @@ analyze_folds =
       # Calculate quantiles to discretize the continuous mixture.
       quantiles = quantile(mixture_train,
                            probs = seq(0, 1, by = 1 / quantiles_mixtures))
+
+      # Check if we have overlap of cutpoints.
+      # TODO: catch this error and continue on, at least with the other exposure groups.
+      if (length(unique(quantiles)) < length(quantiles)) {
+        print(hist(mixture_train))
+        cat("Total quantiles:", length(quantiles), "Unique quantiles:", length(unique(quantiles)), "\n")
+        cat("Quantiles:", quantiles, "\n")
+        stop(paste0("Error: mixture quantiles are not unique on the training data. ",
+                    "Meaning that there is little variation in the mixture, likely due to",
+                    "it not being related to the outcome.",
+                    "To resolve, you could remove these exposures, change the mixture estimation ",
+                    "function, to reduce the number of CV-TMLE folds.")
+        )
+      }
+
+
       cutpoints[[group_i]] = quantiles
 
       # Discretize into quantiles (quantiles_mixtures)
@@ -120,10 +136,44 @@ analyze_folds =
       # TODO: can generate error - quantiles are not unique.
       # We use .bincode() to avoid the "quantiles are not unique" possible error.
       # See https://stackoverflow.com/questions/16184947/cut-error-breaks-are-not-unique
-      # mixture_bins = cut(mixture_train, breaks = quantiles, include.lowest = TRUE)
-      mixture_bins = .bincode(mixture_train, breaks = quantiles, include.lowest = TRUE)
-      #mixture_bins_test = cut(mixture_test, breaks = quantiles, include.lowest = TRUE)
-      mixture_bins_test = .bincode(mixture_test, breaks = quantiles, include.lowest = TRUE)
+      mixture_bins = cut(mixture_train, breaks = quantiles, include.lowest = TRUE)
+      #mixture_bins = .bincode(mixture_train, breaks = quantiles, include.lowest = TRUE)
+      mixture_bins_test = cut(mixture_test, breaks = quantiles, include.lowest = TRUE)
+      #mixture_bins_test = .bincode(mixture_test, breaks = quantiles, include.lowest = TRUE)
+
+      # Check if we have fewer bins in the test data than in the training data.
+      # If so, we may have too many CV-TMLE folds for this dataset size.
+      if (length(unique(mixture_bins)) > length(unique(mixture_bins_test))) {
+        cat("Training mixture bins:", length(unique(mixture_bins)),
+            "Test mixture bins:", length(unique(mixture_bins_test)), "\n")
+        stop(paste0("Error: test data does not cover all training data bins. ",
+                    "Try reducing the number of CV-TMLE folds, or change the mixture estimation function."))
+      }
+
+      # If there is a mixture value in the test data that is outside of the training data bounds
+      # we can round it to the nearest bin.
+      # TODO: we may want to bound the test set mixture rather than assign bins directly.
+      if (sum(mixture_test > max(mixture_train)) > 0) {
+        test_mixture_too_high = which(mixture_test > max(mixture_train))
+        # Slightly complex because cut() returns a factor.
+        mixture_bins_test[test_mixture_too_high] = levels(mixture_bins)[max(as.numeric(mixture_bins), na.rm = TRUE)]
+      }
+
+      if (sum(mixture_test < min(mixture_train)) > 0) {
+        test_mixture_too_low = which(mixture_test < min(mixture_train))
+        # Slightly complex because cut() returns a factor.
+        mixture_bins_test[test_mixture_too_low] = levels(mixture_bins)[min(as.numeric(mixture_bins), na.rm = TRUE)]
+      }
+
+      # Warn if there are missing values.
+      if (sum(is.na(mixture_bins)) > 0) {
+        cat("Warning: found NAs in the training mixture bins.\n")
+        browser()
+      }
+      if (sum(is.na(mixture_bins_test)) > 0) {
+        cat("Warning: found NAs in the test mixture bins.\n")
+        browser()
+      }
 
       # For the outcome regression exclude the original exposures in this group
       # plus the outcome variable, and add in the mixture bins.
@@ -166,24 +216,40 @@ analyze_folds =
         # This is our A
         is_current_bin = as.integer(as.integer(mixture_bins) == bin_i)
 
-        # Estimate propensity score regression per mixture_bin.
-        reg_propensity =
-          # Suppress warnings like "In lognet(x, is.sparse, ix, jx, y, weights, offset, alpha,  ... :
-          # one multinomial or binomial class has fewer than 8  observations; dangerous ground"
-          # TODO: only suppress specific warnings, like Oleg has in stremr.
-          suppressWarnings(
-          # We convert mixture_bins to an integer because it's a factor.
-          SuperLearner(Y = is_current_bin,
-                       X = subset(df_outcome_reg, select = -c(mixture_bins)),
-                       family = "binomial",
-                       cvControl = SuperLearner.CV.control(V = folds_sl,
-                                                           stratifyCV = TRUE),
-                       SL.library = estimator_propensity)
-          )
 
-        if (verbose) {
-          cat("Propensity regression result", paste0("(", bin_i, "):\n"))
-          print(reg_propensity)
+        # Check if all observations have the same value for is_current_bin, in which
+        # case we can't do propensity score estimation.
+        # TODO: why would this happen - is something else going wrong?
+        if (length(unique(is_current_bin)) == 1L) {
+          warning(paste0("Warning: is_current_bin distribution has a single value.",
+                         "\nSkipping propensity score estimation for bin ", bin_i))
+          browser()
+          reg_propensity = NULL
+        } else {
+
+
+          # Estimate propensity score regression per mixture_bin.
+          # This will give an error "stratifyCV only implemented for binary Y" if all
+          # observations are 1 or all are 0.
+          reg_propensity =
+            # Suppress warnings like "In lognet(x, is.sparse, ix, jx, y, weights, offset, alpha,  ... :
+            # one multinomial or binomial class has fewer than 8  observations; dangerous ground"
+            # TODO: only suppress specific warnings, like Oleg has in stremr.
+            suppressWarnings(
+            # We convert mixture_bins to an integer because it's a factor.
+            SuperLearner(Y = is_current_bin,
+                         X = subset(df_outcome_reg, select = -c(mixture_bins)),
+                         family = "binomial",
+                         cvControl = SuperLearner.CV.control(V = folds_sl,
+                                                             stratifyCV = TRUE),
+                         SL.library = estimator_propensity)
+            )
+
+          if (verbose) {
+            cat("Propensity regression result", paste0("(", bin_i, "):\n"))
+            print(reg_propensity)
+          }
+
         }
 
         # Save fits to apply to test data.
@@ -209,7 +275,11 @@ analyze_folds =
         df_propensity = subset(df_outcome, select = -c(mixture_bins))
 
         # Predict g - propensity to have this mixture level.
-        if (class(reg_propensity) == "SuperLearner") {
+        if (is.null(reg_propensity)) {
+          # We have a null propensity score estimator, meaning the test data had no
+          # variation in the membership in this bin
+          g_pred = NULL
+        } else if (class(reg_propensity) == "SuperLearner") {
           # TODO: is type = "response" needed for SuperLearner? Need to check.
           g_pred = predict(reg_propensity, df_propensity, onlySL = TRUE,
                            type = "response")$pred
