@@ -11,6 +11,8 @@ vignette: >
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 setwd(here::here("vignettes"))
+
+library(magrittr)
 ```
 
 See https://www.niehs.nih.gov/news/events/pastmtg/2015/statistical/index.cfm
@@ -113,8 +115,8 @@ result = tlmixture(df, outcome = task$outcome,
                    mixture_fn = tlmixture::mixture_glm,
                    #folds_cvtmle = folds_cvtmle,
                    #folds_cvtmle = 3,
-                   #folds_cvtmle = 5,
-                   folds_cvtmle = 10,
+                   folds_cvtmle = 5,
+                   #folds_cvtmle = 10,
                    #folds_cvtmle = 20,
                    verbose = TRUE)
 ```
@@ -124,14 +126,14 @@ result = tlmixture(df, outcome = task$outcome,
 ```{r data1_results}
 summary(result$outcome_rescaled)
 data[[result$outcome]] = result$outcome_rescaled
+
 # Analyze mixture distribution.
-# TODO: fix "unknown column" error due to rescaling of outcome variable.
 mix_result = analyze_mixture(data, result,
                              name = "Dataset 1",
                              reg_vars = task$covariates,
                              vars_desc = task$covariates)
 
-# TODO: get plot_analysis() working.
+# TODO: consider integrating plot_analysis() into analyze_mixture()
 plot_analysis(mix_result)
 
 weight_df = do.call(rbind, sapply(result$folds, `[[`, "weights"))
@@ -140,6 +142,14 @@ colMeans(weight_df)
 
 ```{r data1_display, results="asis"}
 display_mixture(mix_result)
+# Run again, this time as latex.
+options(knitr.table.format = "latex")
+kab_tab = display_mixture(mix_result)
+cat(kab_tab, file = "data1-summary-table.tex")
+# Restore previous table format setting.
+# We unfortunately can't just assign it to NULL :/ Have to pick a specific value.
+options(knitr.table.format = "html")
+      
 ```
 
 ## Simulated Dataset 2
@@ -228,8 +238,8 @@ result = tlmixture(df, outcome = task$outcome,
                    cluster_exposures = cluster_exposures,
                    #folds_cvtmle = folds_cvtmle,
                    #folds_cvtmle = 3,
-                   #folds_cvtmle = 5,
-                   folds_cvtmle = 10,
+                   folds_cvtmle = 5,
+                   #folds_cvtmle = 10,
                    #folds_cvtmle = 20,
                    verbose = TRUE)
 ```
@@ -250,5 +260,13 @@ mix_result = analyze_mixture(data, result,
 plot_analysis(mix_result)
 ```
 ```{r results="asis"}
+# Run once and display as html.
 display_mixture(mix_result)
+# Run again, this time as latex.
+options(knitr.table.format = "latex")
+kab_tab = display_mixture(mix_result)
+cat(kab_tab, file = "data2-summary-table.tex")
+# Restore previous table format setting.
+options(knitr.table.format = "html")
+#getOption("knitr.table.format")
 ```
