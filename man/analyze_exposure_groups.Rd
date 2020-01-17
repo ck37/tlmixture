@@ -6,6 +6,11 @@
 \usage{
 analyze_exposure_groups(combined_results, verbose = FALSE)
 }
+\arguments{
+\item{combined_results}{tbd}
+
+\item{verbose}{tbd}
+}
 \description{
 Not relevant if there is only a single mixture
 }

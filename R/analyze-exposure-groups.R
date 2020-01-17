@@ -1,6 +1,10 @@
 #' Analyze results for the overall exposure groups
 #'
 #' Not relevant if there is only a single mixture
+#'
+#' @param combined_results tbd
+#' @param verbose tbd
+#'
 #' @importFrom dplyr arrange
 #' @importFrom magrittr %>%
 analyze_exposure_groups = function(combined_results, verbose = FALSE) {
