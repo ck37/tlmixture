@@ -8,6 +8,8 @@ Authors@R:
            email = "chrisken@gmail.com",
            comment = c(ORCID = "0000-0001-7444-2766"))
 Description: Data-adaptive creation of exposure mixtures using targeted learning.
+URL: http://github.com/ck37/tlmixture
+BugReports: http://github.com/ck37/tlmixture/issues
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
@@ -15,6 +17,7 @@ Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.0.2
 VignetteBuilder: knitr
 Suggests: 
+    ck37r,
     here,
     gWQS,
     glmnet,
@@ -37,3 +40,5 @@ Imports:
     tidyr
 Depends:
     SuperLearner
+Remotes: 
+    github::ck37/ck37r
