@@ -34,6 +34,8 @@ analyze_mixture(
 
 \item{round_digits}{tbd}
 
+\item{rescale_adjustment}{tbd}
+
 \item{reg_vars}{tbd}
 }
 \description{

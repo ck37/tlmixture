@@ -8,6 +8,7 @@
 #' @param name tbd
 #' @param weight_var tbd
 #' @param round_digits tbd
+#' @param rescale_adjustment tbd
 #' @param reg_vars tbd
 #'
 #' @importFrom dplyr filter group_by one_of n mutate_at vars summarize_at select
