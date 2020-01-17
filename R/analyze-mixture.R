@@ -60,7 +60,7 @@ analyze_mixture =
       unique#()
    # %>% as.data.frame()
     }
-    
+
     # Rename outcome to just be "Outcome"
     #rownames(tab) = c("Mixture", "Outcome")
 
@@ -95,7 +95,7 @@ analyze_mixture =
     tab2 = round(tab2, round_digits)
 
     tab3 = NULL
-    
+
     # Examine adjustment vars over the quantiles of the mixture.
     if (!is.null(vars_desc)) {
       if (rescale_adjustment) {
@@ -105,7 +105,7 @@ analyze_mixture =
       } else {
         data2 = data
       }
-      
+
       tab3 = data2 %>%
         # TODO: report on this missingness.
         filter(!is.na(mixture)) %>%
@@ -142,7 +142,7 @@ analyze_mixture =
     # Plot mixture distribution with quantiles.
     print({mixture_dist = qplot(mixture) +
             geom_vline(aes(xintercept = quants_plot)) +
-            theme_bw() +
+            theme_minimal() +
             labs(#title = paste("Mixture distribution:", name),
                  y = "Frequency",
                  x = "Estimated mixture")})
@@ -169,7 +169,7 @@ analyze_mixture =
             geom_point() +
             geom_errorbar(aes(ymin = ci_lower, ymax = ci_upper), width = 0.2) +
             labs(x = "Mixture quantile",
-                 y = "Adjusted outcome mean") + 
+                 y = "Adjusted outcome mean") +
             theme_minimal()})
     #print(adjusted_effects)
 
