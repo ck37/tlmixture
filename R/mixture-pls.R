@@ -3,6 +3,7 @@
 #' @param data tbd
 #' @param outcome outcome column name
 #' @param exposures tbd
+#' @param exposure_groups tbd
 #' @param quantiles tbd
 #' @param verbose tbd
 #'
@@ -10,7 +11,9 @@
 #'
 #' @export
 mixture_pls =
-  function(data, outcome, exposures, quantiles, verbose = FALSE) {
+  function(data, outcome, exposures,
+           exposure_groups,
+           quantiles, verbose = FALSE) {
   if (verbose) {
     cat("Create exposure weights.\n")
   }

@@ -8,6 +8,7 @@ mixture_sl(
   data,
   outcome,
   exposures,
+  exposure_groups,
   quantiles,
   family = "binomial",
   verbose = FALSE,
@@ -20,6 +21,8 @@ mixture_sl(
 \item{outcome}{outcome column name}
 
 \item{exposures}{tbd}
+
+\item{exposure_groups}{tbd}
 
 \item{quantiles}{tbd}
 

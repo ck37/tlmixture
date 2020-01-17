@@ -8,6 +8,7 @@ mixture_glm(
   data,
   outcome,
   exposures,
+  exposure_groups,
   quantiles,
   family = gaussian(),
   verbose = FALSE,
@@ -20,6 +21,8 @@ mixture_glm(
 \item{outcome}{outcome column name}
 
 \item{exposures}{tbd}
+
+\item{exposure_groups}{List of all exposure groups}
 
 \item{quantiles}{tbd}
 

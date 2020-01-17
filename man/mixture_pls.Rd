@@ -4,7 +4,14 @@
 \alias{mixture_pls}
 \title{Create exposure weights using partial least squares}
 \usage{
-mixture_pls(data, outcome, exposures, quantiles, verbose = FALSE)
+mixture_pls(
+  data,
+  outcome,
+  exposures,
+  exposure_groups,
+  quantiles,
+  verbose = FALSE
+)
 }
 \arguments{
 \item{data}{tbd}
@@ -12,6 +19,8 @@ mixture_pls(data, outcome, exposures, quantiles, verbose = FALSE)
 \item{outcome}{outcome column name}
 
 \item{exposures}{tbd}
+
+\item{exposure_groups}{tbd}
 
 \item{quantiles}{tbd}
 

@@ -3,6 +3,7 @@
 #' @param data tbd
 #' @param outcome outcome column name
 #' @param exposures tbd
+#' @param exposure_groups tbd
 #' @param quantiles tbd
 #' @param family tbd
 #' @param sl_library tbd
@@ -12,7 +13,10 @@
 #'
 #' @export
 mixture_sl =
-  function(data, outcome, exposures, quantiles, family = "binomial", verbose = FALSE,
+  function(data, outcome,
+           exposures,
+           exposure_groups,
+           quantiles, family = "binomial", verbose = FALSE,
            sl_library = c("SL.mean", "SL.glm")) {
   if (verbose) {
     cat("Create mixture via SuperLearner.\n")
