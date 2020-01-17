@@ -26,7 +26,8 @@ plot_analysis = function(analysis) {
       mutate(label = if_else(quartile == max(quartile), as.character(var), NA_character_)) %>%
       ggplot(aes(x = quartile, y = mean, group = var, color = var)) +
       geom_line() + theme_minimal() +
-      labs(title = paste("Distribution of demographics for", analysis$name, "mixture"),
+      labs(#title = paste("Adjustment variables"),
+           y = "Mean within quantile",
            x = "Mixture quantile") +
       expand_limits(x = 5) +
       #scale_x_discrete(expand = c(0, 4)) +
@@ -40,4 +41,10 @@ plot_analysis = function(analysis) {
     #plot.margin = unit(c(1,6,1,1), "lines"))
     print(g)
   }
+  
+  result = list(
+    demos = g
+  )
+  
+  invisible(result)
 }
