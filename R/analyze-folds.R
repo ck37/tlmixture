@@ -118,8 +118,12 @@ analyze_folds =
       # Discretize into quantiles (quantiles_mixtures)
       # If we don't set include.lowest = TRUE then the lowest obs will have an NA.
       # TODO: can generate error - quantiles are not unique.
-      mixture_bins = cut(mixture_train, breaks = quantiles, include.lowest = TRUE)
-      mixture_bins_test = cut(mixture_test, breaks = quantiles, include.lowest = TRUE)
+      # We use .bincode() to avoid the "quantiles are not unique" possible error.
+      # See https://stackoverflow.com/questions/16184947/cut-error-breaks-are-not-unique
+      # mixture_bins = cut(mixture_train, breaks = quantiles, include.lowest = TRUE)
+      mixture_bins = .bincode(mixture_train, breaks = quantiles, include.lowest = TRUE)
+      #mixture_bins_test = cut(mixture_test, breaks = quantiles, include.lowest = TRUE)
+      mixture_bins_test = .bincode(mixture_test, breaks = quantiles, include.lowest = TRUE)
 
       # For the outcome regression exclude the original exposures in this group
       # plus the outcome variable, and add in the mixture bins.
