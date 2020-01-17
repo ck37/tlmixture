@@ -20,7 +20,7 @@ analyze_exposure_groups = function(combined_results, verbose = FALSE) {
 
     # Sort by p-value (asc), then standard err (asc)
 
-    groups_df = groups_df %>% arrange(rd_pval_fdr, rd_se) %>% as.data.frame()
+    groups_df = groups_df %>% arrange(rd_pval_fdr, rd_pval, rd_se) %>% as.data.frame()
   }
 
   # Return the updated dataframe.
