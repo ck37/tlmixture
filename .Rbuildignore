@@ -9,3 +9,4 @@
 ^R/wqs-helpers.R$
 ^doc$
 ^Meta$
+^vignettes/.*\.tex$
