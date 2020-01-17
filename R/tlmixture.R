@@ -126,13 +126,19 @@ tlmixture =
                          quantiles_mixtures = quantiles_mixtures,
                          verbose = verbose)
 
+  ##################
+  # Analyze results for exposure groups (FDR adjustment, etc.)
+  group_results =
+    analyze_exposure_groups(combined_results,
+                            verbose = verbose)
 
   ##################
   # Compile everything we want to return.
   results =
     list(folds = fold_results,
          combined = combined_results,
-         folds = folds,
+         groups = group_results,
+         fold_sets = folds,
          outcome = outcome,
          outcome_orig = outcome_orig,
          outcome_bounds = q_bounds,

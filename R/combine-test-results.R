@@ -27,6 +27,9 @@ combine_test_results =
   # Dataframe to contain results.
   results_df = NULL
 
+  # Dataframe to contain exposure-group results.
+  groups_df = NULL
+
   # Loop over exposure groups.
   for (group_i in seq(length(exposure_groups))) {
 
@@ -61,6 +64,9 @@ combine_test_results =
     }
 
     ################
+
+    # Non-dataframe list to save arbitrary objects for each quantile.
+    quantile_results = list()
 
     # Loop over mixture quantiles
     for (quantile_i in seq(quantiles_mixtures)) {
@@ -160,7 +166,7 @@ combine_test_results =
       # Calculate combined SE.
       std_err = sqrt(mean(ic_vars) / nrow(test_results))
 
-      # Calculate exposure-specific mean.
+      # Calculate quantile-specific mean.
       psi = mean(thetas)
 
       # Calculate CI
@@ -173,6 +179,7 @@ combine_test_results =
       new_results =
         data.frame(exposure_group = group_i,
                    quantile = quantile_i,
+                   # Quantile-specific mean, averaged over all CV-TMLE folds.
                    psi = psi,
                    std_err = std_err,
                    # TODO: fill in these values.
@@ -183,13 +190,116 @@ combine_test_results =
       # Add results to dataframe.
       results_df = rbind(results_df, new_results)
 
+      # Also save objects needed for the RD and RR effect calculations.
+      results = list(
+        # Adjusted quantile-specific means, one per CV-TMLE fold
+        means = thetas,
+        # This is a list, with one element per CV-TMLE fold
+        curves = influence_curves
+      )
+      quantile_results[[quantile_i]] = results
+
+
+    } # Looping over quantiles of the current mixture
+
+    #####################################################
+    # Now that we have the quantile-specific, estimate group-specific parameters:
+    # 1. Risk difference of high quantile - low quantile, with 95% CI
+    # 2. Risk ratio of high quantile / low quantile, with 95% CI
+    #   - But only if outcome is binary?
+
+    # Extract the quantile results for convenience access.
+    qmin = quantile_results[[1]]
+
+    # quantile_i should already be set to the maximum quantile due to the FOR loop above.
+    qmax = quantile_results[[quantile_i]]
+
+    # 1. Risk difference
+    # Calculate estimate within each fold
+    # One element per fold.
+    rd_vec = qmax$means - qmin$means
+
+    # Calculate variance of difference of influence curves for each CV-TMLE fold.
+    # One element per fold.
+    rd_ic_var = sapply(seq(length(qmax$curves)), function(ic_i) {
+      var(qmax$curves[[ic_i]] - qmin$curves[[ic_i]])
+    })
+
+    n_validation = sapply(seq(length(qmax$curves)), function(ic_i) {
+      # Picking the maximum quantile arbitrarily, the length of the influence curve
+      # tells us the sample size in that validation set.
+      length(qmax$curves[[ic_i]])
+    })
+
+    # Calculate the standard error for each CV-TMLE fold, based on the size of the
+    # validation dataset
+    # This will be a vector of: sqrt(varIC / n_validation)
+    rd_se = sqrt(rd_ic_var / n_validation)
+
+    if (verbose) {
+      cat("Risk differences:", rd_vec, "\n")
+      cat("Variances:", rd_ic_var, "\n")
+      cat("Standard errors:", rd_se, "\n")
     }
 
+    total_validation_size = sum(n_validation)
 
-  }
+    # Calculate overall RD, se, and p-value
+    rd_overall = mean(rd_vec)
+
+    # Overall standard error is sqrt(mean(IC variances) / n) where n = total size of all validation sets.
+    rd_se_overall = sqrt(mean(rd_ic_var) / total_validation_size)
+
+    # 1-sided p-value
+    # rd_pval_overall = 1 - pnorm(rd_overall / rd_se_overall)
+    # 2-sided p-value
+    rd_pval_overall = 2 * pnorm(-abs(rd_overall / rd_se_overall))
+
+    # Confidence interval
+    z_1.96 = qnorm(0.975)
+    rd_ci_lower = rd_overall - z_1.96 * rd_se_overall
+    rd_ci_upper = rd_overall + z_1.96 * rd_se_overall
+
+    # TODO: also do for RR
+
+    if (verbose) {
+      cat("Risk difference:", rd_overall,
+          paste0(" (", round(rd_ci_lower, 3), "-", round(rd_ci_upper, 3), ")"),
+          paste0(" p = ", round(rd_pval_overall, 5)),
+          "\n")
+    }
+
+    # Include group_name if it's defined.
+    if (!is.null(names(exposure_groups))) {
+      group_name = names(exposure_groups)[group_i]
+    } else {
+      group_name = ""
+    }
+
+    # Compile results for this exposure group.
+    group_result = list(
+      i = group_i,
+      # Not working if group name is null - needs to be an empty string.
+      group = group_name,
+      rd = rd_overall,
+      rd_pval = rd_pval_overall,
+      rd_ci_lower = rd_ci_lower,
+      rd_ci_upper = rd_ci_upper,
+      rd_se = rd_se_overall
+    )
+
+    # Append to the dataframe.
+    groups_df = rbind.data.frame(groups_df, group_result,
+                                 # We need strings to not be factors because we
+                                 # are adding a unique group name at each iteration.
+                                 stringsAsFactors = FALSE)
+
+  } # Looping over exposure groups
+
   results = list(#weight_dfs = NULL, #weight_dfs,
                  weight_dfs = weight_dfs,
-                 results = results_df
+                 results = results_df,
+                 groups_df = groups_df
                  # TODO: what other results?
                  )
   return(results)

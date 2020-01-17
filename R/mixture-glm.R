@@ -3,6 +3,7 @@
 #' @param data tbd
 #' @param outcome outcome column name
 #' @param exposures tbd
+#' @param exposure_groups List of all exposure groups
 #' @param quantiles tbd
 #' @param family tbd
 #' @param verbose tbd
@@ -12,18 +13,20 @@
 #'
 #' @export
 mixture_glm =
-  function(data, outcome, exposures, quantiles, family = gaussian(), verbose = FALSE,
+  function(data, outcome, exposures,
+           exposure_groups,
+           quantiles, family = gaussian(), verbose = FALSE,
            ...) {
   if (verbose) {
     cat("Create mixture via GLM.\n")
   }
 
   data_x = data[, !names(data) %in% outcome, drop = FALSE]
-  
+
   formula = as.formula(paste(outcome, "~ ."))
-  
+
   # TODO: standardize variables?
-  
+
   estimator =
     stats::glm(formula, data = data, family = family)
 
@@ -31,7 +34,7 @@ mixture_glm =
                  outcome = outcome,
                  exposures = exposures,
                  weights = coef(estimator)[exposures])
-  
+
   class(results) = "mixture_glm"
 
   return(results)
