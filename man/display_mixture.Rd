@@ -4,7 +4,7 @@
 \alias{display_mixture}
 \title{Display mixture}
 \usage{
-display_mixture(analysis, digits = 4)
+display_mixture(analysis, digits = 3)
 }
 \arguments{
 \item{analysis}{tbd}
