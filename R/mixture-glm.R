@@ -50,6 +50,10 @@ predict.mixture_glm = function(object, data, ...) {
   # Extract just the exposures and apply the coefficients, then the link family.
   # TODO: should we generate mixture on the logit scale or the probability scale?
   weights = coef(object$estimator)[object$exposures]
+
+  # Replace any NA weights with 0 (e.g. due to collinearity)
+  weights[is.na(weights)] = 0
+
   preds = as.vector(weights %*% t(data[, object$exposures]))
   return(preds)
 }
