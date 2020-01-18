@@ -101,6 +101,12 @@ analyze_folds =
       # TODO: support predict() in the pls version.
       mixture_train = predict(result, data_train)
 
+      # Check for missing values.
+      if (sum(is.na(mixture_train)) > 0) {
+        cat("Error: found missing values in the mixture prediction on training data.")
+        browser()
+      }
+
       # original version.
       #mixture_train = as.vector(as.matrix(data_train[, exposure_names]) %*%
       #                            matrix(result$weights, ncol = 1))
@@ -109,6 +115,11 @@ analyze_folds =
       mixture_test = predict(result, data_test)
       #mixture_test = as.vector(as.matrix(data_test[, exposure_names]) %*%
       #                           matrix(result$weights, ncol = 1))
+
+      if (sum(is.na(mixture_test)) > 0) {
+        cat("Error: found missing values in the mixture prediction on test data.")
+        browser()
+      }
 
       # Calculate quantiles to discretize the continuous mixture.
       quantiles = quantile(mixture_train,
