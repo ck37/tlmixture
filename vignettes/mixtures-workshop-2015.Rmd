@@ -104,21 +104,28 @@ summary(reg)
 # TODO: fix tlmixture to work with 1 or 0 adjustment variables.
 df$z2 = rnorm(nrow(df))
 
+task$exposures
+
 result = tlmixture(df, outcome = task$outcome,
                    exposures = task$exposures,
                    quantiles_exposures = quantiles_exposures,
                    #quantiles_mixtures = quantiles_mixtures,
                    quantiles_mixtures = 4,
                    #quantiles_mixtures = 5,
-                   estimator_outcome = estimators,
+                   #estimator_outcome = estimators,
+                   estimator_outcome = c("SL.mean", "SL.lm"),
                    cluster_exposures = cluster_exposures,
-                   mixture_fn = tlmixture::mixture_glm,
+                   #mixture_fn = tlmixture::mixture_glm,
+                   mixture_fn = tlmixture::mixture_lm,
                    #folds_cvtmle = folds_cvtmle,
-                   #folds_cvtmle = 3,
-                   folds_cvtmle = 5,
+                   folds_cvtmle = 3,
+                   #folds_cvtmle = 5,
                    #folds_cvtmle = 10,
                    #folds_cvtmle = 20,
                    verbose = TRUE)
+
+result$combined$groups_df
+result$groups
 ```
 
 ### Review results
