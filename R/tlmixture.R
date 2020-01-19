@@ -130,8 +130,12 @@ tlmixture =
   # Analyze results for exposure groups (FDR adjustment, etc.)
   group_results =
     analyze_exposure_groups(combined_results,
+                            data = data,
+                            outcome = outcome,
+                            exposures = exposures,
+                            mixture_fn = mixture_fn,
                             verbose = verbose)
-
+  
   ##################
   # Compile everything we want to return.
   results =
@@ -144,6 +148,7 @@ tlmixture =
          outcome_bounds = q_bounds,
          outcome_rescaled = data[[outcome]],
          exposures = exposures,
+         mixture_fn = mixture_fn,
          quantiles_exposures = quantiles_exposures,
          quantiles_mixtures = quantiles_mixtures,
          rescaled = needs_rescale,
