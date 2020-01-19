@@ -90,7 +90,7 @@ mixture_backfit_sl =
       change_g_w = max(abs(g_w - old_g_w))
       
       # TODO: track these two values over time.
-      cat(iteration, ". max change f_a:", change_f_a, "max change g_w:", change_g_w, "\n")
+      cat(paste0(iteration, "."), "max change f_a:", change_f_a, "max change g_w:", change_g_w, "\n")
       
       # Stop iteration if we're below tolerance
       if (max(change_f_a, change_g_w) < tolerance) {
