@@ -56,7 +56,7 @@ mixture_backfit_lm =
     y_star = data[[outcome]] - (f_a - correction)
     
     # Estimate adjustment function 
-    reg_adjust = lm(y_star ~ ., data = df_adjust)
+    reg_adjust = lm(y_star ~ ., data = df_confounders)
     
     g_w = reg_adjust$fitted.values
     
@@ -70,7 +70,7 @@ mixture_backfit_lm =
       # Track optimization progress.
       current_coefs = coefs_mixture[iteration, ]
       prior_coefs = coefs_mixture[iteration - 1, ]
-      coef_change = sum(abs(current_coefs - prior_coefs))
+      coef_change = max(abs(current_coefs - prior_coefs))
       
       # Stop iteration if we're below tolerance
       if (coef_change < tolerance) {
