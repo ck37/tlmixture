@@ -4,10 +4,28 @@
 \alias{analyze_exposure_groups}
 \title{Analyze results for the overall exposure groups}
 \usage{
-analyze_exposure_groups(combined_results, verbose = FALSE)
+analyze_exposure_groups(
+  combined_results,
+  data,
+  outcome,
+  exposures,
+  mixture_fn,
+  refit_mixtures = TRUE,
+  verbose = FALSE
+)
 }
 \arguments{
 \item{combined_results}{tbd}
+
+\item{data}{tbd}
+
+\item{outcome}{tbd}
+
+\item{exposures}{tbd}
+
+\item{mixture_fn}{tbd}
+
+\item{refit_mixtures}{tbd}
 
 \item{verbose}{tbd}
 }
