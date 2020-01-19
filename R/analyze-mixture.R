@@ -141,7 +141,7 @@ analyze_mixture =
     # Plots
 
     # Plot mixture distribution with quantiles.
-    print({mixture_dist = qplot(mixture) +
+    print({mixture_dist = qplot(mixture, fill = I("gray70"), show.legend = FALSE) +
             geom_vline(aes(xintercept = quants_plot)) +
             theme_minimal() +
             labs(#title = paste("Mixture distribution:", name),
@@ -153,9 +153,10 @@ analyze_mixture =
     print({unadjusted_smooth = ggplot(data = data.frame(mixture, y = data[[outcome]]),
                  aes(x = mixture, y = y)) + #, weight = weight_var)) +
             #aes_(x = "mixture", y = "y")) + #, weight = weight_var)) +
-            geom_point() + geom_smooth(se = TRUE, span = span) +
+            geom_point(alpha = I(0.5), show.legend = FALSE, stroke = 0) +
+            geom_smooth(se = TRUE, span = span) +
             geom_vline(aes(xintercept = quants_plot),
-                       data = data.frame(quants_plot)) +
+                       data = data.frame(quants_plot), alpha = I(0.8)) +
             theme_minimal() +
             labs(x = paste("Estimated mixture"),
                  y = "Outcome"#,
