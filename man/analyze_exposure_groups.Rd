@@ -10,7 +10,7 @@ analyze_exposure_groups(
   outcome,
   exposures,
   mixture_fn,
-  refit_mixtures = TRUE,
+  refit_mixtures = FALSE,
   verbose = FALSE
 )
 }
