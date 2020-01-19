@@ -4,6 +4,8 @@
 #' @param outcome outcome column name
 #' @param exposures tbd
 #' @param exposure_groups List of all exposure groups
+#' @param max_iterations tbd
+#' @param tolerance tbd
 #' @param quantiles tbd
 #' @param family Not used for this mixture estimator.
 #' @param verbose tbd
