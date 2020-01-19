@@ -12,6 +12,7 @@ analyze_mixture(
   vars_desc = NULL,
   name = "exposures",
   weight_var = NULL,
+  exposure_group = "all",
   round_digits = 4,
   rescale_adjustment = TRUE,
   reg_vars = NULL

@@ -23,6 +23,7 @@ analyze_mixture =
            vars_desc = NULL,
            name = "exposures",
            weight_var = NULL,
+           exposure_group = "all",
            round_digits = 4,
            rescale_adjustment = TRUE,
            reg_vars = NULL) {
@@ -36,7 +37,8 @@ analyze_mixture =
     avg_wgts = colMeans(tlmixture_result$combined$weight_dfs[[1]])
 
     # Calculate estimated mixture from the average weights.
-    mixture = as.vector(as.matrix(data[, exposures]) %*% matrix(avg_wgts, ncol = 1L))
+    # TODO: apply mixture function to full data.
+    mixture = tlmixture_result$groups$mixture_df[[exposure_group]]
 
     # Calculate mixture quantiles.
     # Extract the internal values - don't need the 0% and 100% marks.
