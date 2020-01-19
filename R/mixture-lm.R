@@ -17,15 +17,14 @@ mixture_lm =
            exposure_groups,
            quantiles, family = gaussian(), verbose = FALSE,
            ...) {
+    
   if (verbose) {
     cat("Create mixture via LM.\n")
   }
 
-  data_x = data[, !names(data) %in% outcome, drop = FALSE]
-
   formula = as.formula(paste(outcome, "~ ."))
 
-  # TODO: standardize variables?
+  # TODO: standardize variables? Or do outside of the mixture estimation? Or option?
 
   estimator =
     stats::lm(formula, data = data)
@@ -53,6 +52,6 @@ predict.mixture_lm = function(object, data, ...) {
   # Replace any NA weights with 0 (e.g. due to collinearity)
   weights[is.na(weights)] = 0
 
-  preds = as.vector(weights %*% t(data[, object$exposures]))
+  preds = as.vector(weights %*% t(data[, object$exposures, drop = FALSE]))
   return(preds)
 }
