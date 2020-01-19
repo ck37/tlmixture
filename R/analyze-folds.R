@@ -98,7 +98,6 @@ analyze_folds =
 
 
       # Create mixture on the training data.
-      # TODO: support predict() in the pls version.
       mixture_train = predict(result, data_train)
 
       # Check for missing values.
@@ -107,14 +106,13 @@ analyze_folds =
         browser()
       }
 
-      # original version.
-      #mixture_train = as.vector(as.matrix(data_train[, exposure_names]) %*%
-      #                            matrix(result$weights, ncol = 1))
-
       # Create mixture on the test data.
       mixture_test = predict(result, data_test)
-      #mixture_test = as.vector(as.matrix(data_test[, exposure_names]) %*%
-      #                           matrix(result$weights, ncol = 1))
+      
+      if (length(dim(mixture_test)) > 1) {
+        cat("Error: mixture prediction should be a vector, not a matrix.")
+        browser()
+      }
 
       if (sum(is.na(mixture_test)) > 0) {
         cat("Error: found missing values in the mixture prediction on test data.")
@@ -191,7 +189,7 @@ analyze_folds =
       # TODO: determine if we do want to include the other exposure groups.
       vars = setdiff(names(data_train), c(outcome, exposure_names))
       #vars = setdiff(names(data_train), exposure_names)
-      df_outcome_reg = cbind(data_train[, vars],
+      df_outcome_reg = cbind(data_train[, vars, drop = FALSE],
                              # Mixture_bins is a factor but we just need the integer codes.
                              # TODO: perhaps this should be one-hot encoded instead?
                              mixture_bins = as.integer(mixture_bins))
@@ -337,6 +335,12 @@ analyze_folds =
         # Append to our tracking dataframe.
         test_result_df = rbind(test_result_df, new_result)
 
+      }
+      
+      if (FALSE && length(mixture_test) != nrow(test_result_df)) {
+        cat("Error: test mixture length", length(mixture_test),
+        "does not match test_result_df rows", nrow(test_result_df), ".\n")
+        browser()
       }
 
       # Save mixture prediction on stacked test data.
