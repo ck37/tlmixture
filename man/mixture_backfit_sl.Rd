@@ -16,7 +16,7 @@ mixture_backfit_sl(
   max_iterations = 10L,
   tolerance = 1e-05,
   quantiles = NULL,
-  family = gaussian(),
+  family = "gaussian",
   verbose = FALSE,
   ...
 )
