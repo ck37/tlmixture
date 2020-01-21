@@ -21,15 +21,15 @@ mixture_backfit_lm =
            tolerance = 0.00001,
            quantiles = NULL, family = gaussian(), verbose = FALSE,
            ...) {
-    
+
   if (verbose) {
     cat("Create mixture via backfit LM.\n")
   }
-    
+
   # Setup predictor dataframes so that we don't have to do it repeatedly.
   df_confounders = data[, !names(data) %in% c(outcome, exposures), drop = FALSE]
   df_exposures = data[, exposures, drop = FALSE]
-  
+
   # Track coefficients over iterations.
   coefs_mixture = data.frame(matrix(nrow = max_iterations,
                     ncol = length(exposures) + 1))
@@ -39,50 +39,74 @@ mixture_backfit_lm =
   y_star = data[[outcome]]
 
   for (iteration in seq(max_iterations)) {
-    
+
     # Estimate mixture function
     # (Could use GLM with offset)
     reg_mixture = lm(y_star ~ ., data = df_exposures)
-    
+
     coefs_mixture[iteration, ] = coef(reg_mixture)
-    
+
     # Predicted mixture value
     f_a = reg_mixture$fitted.values
-    
+
     # Calculate correction
     correction = mean(f_a)
-    
+
     # Residualize
     y_star = data[[outcome]] - (f_a - correction)
-    
-    # Estimate adjustment function 
+
+    # Estimate adjustment function
     reg_adjust = lm(y_star ~ ., data = df_confounders)
-    
+
     g_w = reg_adjust$fitted.values
-    
+
     # Residualize
     y_star = data[[outcome]] - g_w
-    
+
     # Check for convergence and stop early
     # Sum of the absolute change in the coefficients
     if (iteration > 1) {
-      
+
       # Track optimization progress.
       current_coefs = coefs_mixture[iteration, ]
       prior_coefs = coefs_mixture[iteration - 1, ]
-      coef_change = max(abs(current_coefs - prior_coefs))
-      
+      # Some coefficients may be NA due to a singular covariance matrix
+      coef_change = max(abs(current_coefs - prior_coefs), na.rm = TRUE)
+
       # Stop iteration if we're below tolerance
-      if (coef_change < tolerance) {
-        
+      ##if (coef_change < tolerance) {
+
         # Truncate coefficients df so that we don't have a bunch of empty rows.
-        coefs_mixture = coefs_mixture[1:iteration, ]
+      ##  coefs_mixture = coefs_mixture[1:iteration, ]
+      ## ## break
+      ##}
+
+      # Track optimization progress: max absolute change.
+      # Could instead track the mean(abs(change))
+      # Normalize by standard deviation
+      change_f_a = max(abs(f_a - old_f_a)) / sd(f_a)
+      change_g_w = max(abs(g_w - old_g_w)) / sd(g_w)
+
+      # TODO: track these two values over time.
+      cat(paste0(iteration, "."), "max change f_a:", change_f_a, "max change g_w:", change_g_w, "\n")
+
+      # Stop iteration if we're below tolerance
+      if (max(change_f_a, change_g_w) < tolerance) {
+
+        # Truncate coefficients df so that we don't have a bunch of empty rows.
+        #coefs_mixture = coefs_mixture[1:iteration, ]
+
         break
       }
+
     }
-    
+
+    # Save these values for the next iteration
+    old_f_a = f_a
+    old_g_w = g_w
+
   }
-  
+
   results = list(reg_mixture = reg_mixture,
                  reg_adjust = reg_adjust,
                  coefs_mixture = coefs_mixture,
