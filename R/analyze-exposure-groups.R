@@ -19,7 +19,7 @@ analyze_exposure_groups = function(combined_results,
                                    mixture_fn,
                                    refit_mixtures = FALSE,
                                    verbose = FALSE) {
-  
+
   # Convert the exposures vector to a list.
   # TODO: do this earlier in tlmixture()
   if (!is.list(exposures)) {
@@ -40,24 +40,24 @@ analyze_exposure_groups = function(combined_results,
 
     groups_df = groups_df %>% arrange(rd_pval_fdr, rd_pval, rd_se) %>% as.data.frame()
   }
-  
+
   cat("Refitting mixtures to full data.\n")
-  
+
   mixture_df = NULL
   mixture_objs = list()
-  
+
   if (refit_mixtures) {
-  
+
     # Loop over exposure groups and fit mixture to full dataset.
     for (group_i in seq(length(exposures))) {
       # Fit mixture to full dataframe.
       # TODO: also save mix obj.
       mix_obj = mixture_fn(data, outcome, exposures[[group_i]], verbose = verbose)
       mixture_objs[[group_i]] = mix_obj
-      
+
       # Predict on full df.
       mixture = predict(mix_obj, data)
-      
+
       # TODO: cbind all at once, which will be more efficient.
       if (!is.null(mixture_df)) {
         mixture_df = cbind.data.frame(mixture_df, mixture)
@@ -65,15 +65,17 @@ analyze_exposure_groups = function(combined_results,
         mixture_df = data.frame(mixture)
       }
     }
-    
+
     names(mixture_objs) = names(exposures)
     names(mixture_df) = names(exposures)
   }
-  
+
 
   # Return the updated dataframe.
   results = list(
-    groups_df,
+    groups_df = groups_df,
     mixture_df = mixture_df,
     mixture_objs = mixture_objs)
+
+  results
 }
