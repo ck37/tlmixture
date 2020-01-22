@@ -141,3 +141,28 @@ ggplot(data = plot_df, aes(x = quantile, y = psi)) +
   geom_point() +
   geom_errorbar(aes(ymin = ci_lower, ymax = ci_upper), width = 0.2) +
   theme_minimal()
+
+
+#####
+# mixture_backfit_glm test.
+
+result =
+  tlmixture(data, outcome = "y",
+            exposures = exposures,
+            # This isn't being used currently.
+            quantiles_exposures = quantiles_exposures,
+            #quantiles_mixtures = quantiles_mixtures,
+            #quantiles_mixtures = 5,
+            #quantiles_mixtures = 4,
+            quantiles_mixtures = 3,
+            estimator_outcome = c("SL.mean", "SL.glm"),
+            cluster_exposures = cluster_exposures,
+            mixture_fn = tlmixture::mixture_backfit_glm,
+            #mixture_fn = mixture_backfit_glm,
+            #folds_cvtmle = folds_cvtmle,
+            #folds_cvtmle = 3,
+            #folds_cvtmle = 20,
+            folds_cvtmle = 2,
+            verbose = FALSE)
+
+result$groups$groups_df

@@ -111,29 +111,41 @@ df$z2 = rnorm(nrow(df))
 
 task$exposures
 
-sl_mix_lib = c("SL.mean", "SL.lm", "SL.ranger")
-sl_mix_1 = function(...) mixture_backfit_sl(..., estimator_mixture = sl_mix_lib)
+library(tmle)
 
-sl_mix_lib2 = c("SL.mean", "SL.lm", "SL.ranger", "tmle.SL.dbarts2")
-sl_mix_2 = function(...) mixture_backfit_sl(..., estimator_mixture = sl_mix_lib2)
+get_cores = function() getOption("sl.cores", RhpcBLASctl::get_num_cores())
 
-result = tlmixture(df,
-                   #df2,
-                   outcome = task$outcome,
+dbarts2_50 = function(...) {
+  tmle::tmle.SL.dbarts2(..., ntree = 50, nthread = get_cores()) }
+
+ranger_fast = function(...) SL.ranger(..., num.trees = 150, num.threads = get_cores())
+
+#mix_lib = c("SL.mean", "SL.lm")#, "ranger_fast", "dbarts2_50") 
+#mix_lib = c("SL.mean", "SL.lm", "SL.glmnet", "ranger_fast", "SL.rpart")#, "dbarts2_50") 
+#mix_lib = c("SL.mean", "lm2")
+#mix_lib = c("SL.mean", "lm2", "ranger_fast")
+mix_lib = c("lm2", "ranger_fast")
+mix_sl_1 = function(...) mixture_backfit_sl(..., estimator_mixture = mix_lib) 
+
+
+lm2 = function(...) {
+  # Hide all the damn "prediction from rank-deficient fit may be misleading" warnings.
+  suppressWarnings(SL.lm(...))
+}
+
+result = tlmixture(df, outcome = task$outcome,
                    exposures = task$exposures,
                    quantiles_exposures = quantiles_exposures,
                    #quantiles_mixtures = quantiles_mixtures,
                    quantiles_mixtures = 4,
                    #quantiles_mixtures = 5,
                    #estimator_outcome = estimators,
-                   estimator_outcome = c("SL.mean", "SL.lm", "SL.ranger"),
-                   #cluster_exposures = cluster_exposures,
+                   #estimator_outcome = c("SL.mean", "SL.lm"),
+                   estimator_outcome = c("SL.mean", "lm2", "ranger_fast"),
+                   cluster_exposures = cluster_exposures,
                    #mixture_fn = tlmixture::mixture_glm,
-                   #mixture_fn = tlmixture::mixture_lm,
                    #mixture_fn = tlmixture::mixture_backfit_lm,
-                   mixture_fn = mixture_backfit_lm,
-                   #mixture_fn = mixture_backfit_sl,
-                   #mixture_fn = sl_mix_1,
+                   mixture_fn = mix_sl_1,
                    #folds_cvtmle = folds_cvtmle,
                    #folds_cvtmle = 3,
                    folds_cvtmle = 5,
@@ -170,6 +182,7 @@ dim(preds)
 qplot(preds)
 preds = predict(res$reg_mixture, data[, res$exposures], onlySL = TRUE)
 str(preds)
+result$groups$groups_df
 ```
 
 ### Review results

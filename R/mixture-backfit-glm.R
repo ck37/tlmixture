@@ -1,4 +1,4 @@
-#' Create exposure weights via lm with backfitting
+#' Create exposure weights via glm with backfitting
 #'
 #' @param data tbd
 #' @param outcome outcome column name
@@ -14,7 +14,7 @@
 #' @importFrom stats as.formula as.formula binomial coef lm
 #'
 #' @export
-mixture_backfit_lm =
+mixture_backfit_glm =
   function(data, outcome, exposures,
            exposure_groups = NULL,
            max_iterations = 50L,
@@ -22,8 +22,18 @@ mixture_backfit_lm =
            quantiles = NULL, family = gaussian(), verbose = FALSE,
            ...) {
 
+
+  # Convert from tlmixture family values.
+  if (family == "continuous") {
+    family = "gaussian"
+  }
+
+  if (family == "binary") {
+    family = "binomial"
+  }
+
   if (verbose) {
-    cat("Create mixture via backfit LM.\n")
+    cat("Create mixture via backfit GLM.\n")
   }
 
   # Setup predictor dataframes so that we don't have to do it repeatedly.
@@ -38,30 +48,54 @@ mixture_backfit_lm =
   # Initialize  Y*
   y_star = data[[outcome]]
 
+  # Initialize offset (only used if family = binomial)
+  mixture_offset = rep(0, nrow(df_exposures))
+
   for (iteration in seq(max_iterations)) {
 
     # Estimate mixture function
     # (Could use GLM with offset)
-    reg_mixture = lm(y_star ~ ., data = df_exposures)
+    reg_mixture = glm(y_star ~ ., offset = mixture_offset,
+                      family = family,
+                      data = df_exposures)
 
     coefs_mixture[iteration, ] = coef(reg_mixture)
 
     # Predicted mixture value
+    # For family = binomial() these are predicted probabilities.
     f_a = reg_mixture$fitted.values
 
-    # Calculate correction
+    if (family == "binomial") {
+      # Convert to log-odds scale.
+      f_a = log(f_a / (1 - f_a))
+    }
+
+    # Calculate correction - should this be on the log-odds (linear) or probability scale (non-linear)?
+    #correction = mean(f_a)
     correction = mean(f_a)
 
     # Residualize
-    y_star = data[[outcome]] - (f_a - correction)
+    #y_star = data[[outcome]] - (f_a - correction)
 
-    # Estimate adjustment function
-    reg_adjust = lm(y_star ~ ., data = df_confounders)
+    confounder_offset = f_a - correction
+    # Convert to log-odds scale for linear prediction.
+    # confounder_offset = log(confounder_offset / (1 - confounder_offset))
+
+    # Estimate confounder adjustment function
+    #reg_adjust = lm(y_star ~ ., data = df_confounders)
+    reg_adjust = glm(y_star ~ ., offset = confounder_offset,
+                     family = family,
+                     data = df_confounders)
 
     g_w = reg_adjust$fitted.values
 
     # Residualize
-    y_star = data[[outcome]] - g_w
+    #y_star = data[[outcome]] - g_w
+
+    # TODO: shouldn't this be on the logit scale, rather than probabilities?
+    if (family == "binomial") {
+      mixture_offset = log(g_w / (1 - g_w))
+    }
 
     # Check for convergence and stop early
     # Sum of the absolute change in the coefficients
@@ -88,7 +122,9 @@ mixture_backfit_lm =
       change_g_w = max(abs(g_w - old_g_w)) / sd(g_w)
 
       # TODO: track these two values over time.
-      cat(paste0(iteration, "."), "max change f_a:", change_f_a, "max change g_w:", change_g_w, "\n")
+      if (verbose) {
+        cat(paste0(iteration, "."), "max change f_a:", change_f_a, "max change g_w:", change_g_w, "\n")
+      }
 
       # Stop iteration if we're below tolerance
       if (max(change_f_a, change_g_w) < tolerance) {
@@ -109,15 +145,17 @@ mixture_backfit_lm =
 
   results = list(reg_mixture = reg_mixture,
                  reg_adjust = reg_adjust,
+                 family = family,
                  coefs_mixture = coefs_mixture,
                  outcome = outcome,
+                 mixture_offset = mixture_offset,
                  exposures = exposures,
                  iterations = iteration,
                  max_iterations = max_iterations,
                  converged = iteration < max_iterations,
                  weights = coef(reg_mixture)[exposures])
 
-  class(results) = "mixture_backfit_lm"
+  class(results) = "mixture_backfit_glm"
 
   return(results)
 }
@@ -128,7 +166,16 @@ mixture_backfit_lm =
 #' @param object tbd
 #' @param data tbd
 #' @param ... tbd
-predict.mixture_backfit_lm = function(object, data, ...) {
-  preds = predict(object$reg_mixture, data[, object$exposures])
+predict.mixture_backfit_glm = function(object, data, ...) {
+
+  reg_obj = object$reg_mixture
+
+  # We need to clear the offset to avoid an error unfortunately.
+  # "Error in eval(object$call$offset, newdata) : object 'mixture_offset' not found"
+  if (object$family == "binomial") {
+    reg_obj$call$offset = NULL
+  }
+
+  preds = predict(reg_obj, newdata = data[, object$exposures])
   return(preds)
 }
