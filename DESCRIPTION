@@ -37,8 +37,10 @@ Imports:
     rsample,
     Rsolnp,
     pls,
+    sl3,
     tidyr
 Depends:
     SuperLearner
 Remotes: 
     github::ck37/ck37r
+    github::tlverse/sl3

@@ -133,11 +133,33 @@ lm2 = function(...) {
   suppressWarnings(SL.lm(...))
 }
 
+library(sl3)
+
+lrnr_glm <- make_learner(Lrnr_glm)
+lrnr_mean <- make_learner(Lrnr_mean)
+# Can't use ranger - doesn't support offsets (presumably).
+# lrnr_ranger100 <- make_learner(Lrnr_ranger, num.trees = 100)
+# TODO: add offset support to Lrnr_glmnet.
+lrnr_glmnet <- make_learner(Lrnr_glmnet)
+# stack <- make_learner(Stack, lrnr_glm, lrnr_mean)
+stack <- make_learner(Stack, lrnr_glm, lrnr_mean)#, lrnr_glmnet)
+sl <- Lrnr_sl$new(learners = stack,
+                  metalearner = make_learner(Lrnr_nnls))
+
+estimator_sl3 = function(...) {
+  tlmixture::mixture_backfit_sl3(...,
+                                 estimator_mixture = sl$clone(),
+                                 estimator_confounders = sl$clone())
+}
+```
+
+```{r run_tlmixture}
+
 result = tlmixture(df, outcome = task$outcome,
                    exposures = task$exposures,
                    quantiles_exposures = quantiles_exposures,
                    #quantiles_mixtures = quantiles_mixtures,
-                   quantiles_mixtures = 4,
+                   quantiles_mixtures = 3,
                    #quantiles_mixtures = 5,
                    #estimator_outcome = estimators,
                    #estimator_outcome = c("SL.mean", "SL.lm"),
@@ -145,7 +167,8 @@ result = tlmixture(df, outcome = task$outcome,
                    cluster_exposures = cluster_exposures,
                    #mixture_fn = tlmixture::mixture_glm,
                    #mixture_fn = tlmixture::mixture_backfit_lm,
-                   mixture_fn = mix_sl_1,
+                   #mixture_fn = mixture_backfit_sl3,
+                   mixture_fn = estimator_sl3,
                    #folds_cvtmle = folds_cvtmle,
                    #folds_cvtmle = 3,
                    folds_cvtmle = 5,
@@ -183,6 +206,74 @@ qplot(preds)
 preds = predict(res$reg_mixture, data[, res$exposures], onlySL = TRUE)
 str(preds)
 result$groups$groups_df
+```
+
+### Test backfit sl3
+
+```{r backfit_test_sl3, eval = FALSE}
+df2 = df
+df2$z2 = NULL
+#res = mixture_backfit_lm(df2,
+
+sl3_mixture =  sl3::Lrnr_sl$new(learners =
+                                sl3::make_learner(sl3::Stack, 
+                                                  sl3::make_learner(sl3::Lrnr_mean),
+                                                  sl3::make_learner(sl3::Lrnr_glm)),
+                         metalearner = sl3::make_learner(sl3::Lrnr_nnls))
+
+sl3_confounders =  sl3::Lrnr_sl$new(learners =
+                                sl3::make_learner(sl3::Stack, 
+                                                  sl3::make_learner(sl3::Lrnr_mean),
+                                                  sl3::make_learner(sl3::Lrnr_glm)),
+                         metalearner = sl3::make_learner(sl3::Lrnr_nnls))
+
+res = mixture_backfit_sl3(df2,
+                         task$outcome, task$exposures,
+                         #estimator_mixture = sl3_mixture,
+                         #estimator_confounders = sl3_confounders,
+                         max_iterations = 5L,
+                         verbose = TRUE)
+
+res
+res$coefs_mixture[50L, ]
+summary(res$reg_mixture)
+summary(res$reg_adjust)
+
+# Check prediction.
+preds = predict(res, data[, res$exposures])
+dim(preds)
+qplot(preds)
+preds = predict(res$reg_mixture, data[, res$exposures], onlySL = TRUE)
+str(preds)
+result$groups$groups_df
+```
+
+```{r sl3_test}
+library(sl3)
+sl3_task = make_sl3_Task(data = data,
+                         covariates = c(task$exposures, task$covariates),
+                         outcome = task$outcome, outcome_type = "continuous")
+
+names(sl3_task)
+pryr::object_size(sl3_task)
+pryr::object_size(data)
+class(sl3_task$data)
+class(sl3_task$internal_data)
+
+lrnr_glm <- make_learner(Lrnr_glm)
+lrnr_mean <- make_learner(Lrnr_mean)
+lrnr_ranger100 <- make_learner(Lrnr_ranger, num.trees = 100)
+lrnr_glmnet <- make_learner(Lrnr_glmnet)
+# stack <- make_learner(Stack, lrnr_glm, lrnr_mean)
+stack <- make_learner(Stack, lrnr_glm, lrnr_mean, lrnr_ranger100, lrnr_glmnet)
+sl <- Lrnr_sl$new(learners = stack,
+                  metalearner = make_learner(Lrnr_nnls))
+(sl_fit <- sl$train(sl3_task))
+lrnr_sl_preds <- sl_fit$predict()
+head(lrnr_sl_preds, n = 20)
+summary(lrnr_sl_preds)
+library(ggplot2)
+qplot(lrnr_sl_preds)
 ```
 
 ### Review results
