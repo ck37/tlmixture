@@ -38,7 +38,9 @@ analyze_mixture =
 
     # Calculate estimated mixture from the average weights.
     # TODO: apply mixture function to full data.
-    mixture = tlmixture_result$groups$mixture_df[[exposure_group]]
+    if (!is.null(tlmixture_result$groups$mixture_df)) {
+      mixture = tlmixture_result$groups$mixture_df[[exposure_group]]
+    }
 
     # Calculate mixture quantiles.
     # Extract the internal values - don't need the 0% and 100% marks.
