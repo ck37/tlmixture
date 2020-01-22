@@ -12,6 +12,9 @@ vignette: >
 knitr::opts_chunk$set(echo = TRUE)
 setwd(here::here("vignettes"))
 
+# Enable to generate high-res plots for the paper
+#knitr::opts_chunk$set(dpi = 300, fig.width = 4, fig.height = 4)
+
 library(magrittr)
 ```
 
@@ -102,30 +105,71 @@ summary(reg)
 
 # Create a noise z2 - temporary.
 # TODO: fix tlmixture to work with 1 or 0 adjustment variables.
+# This may be a bug in SuperLearner can comes up when doing propensity score estimation as part of CV-TMLE.
 df$z2 = rnorm(nrow(df))
+#df$z2 = NULL
 
 task$exposures
 
-result = tlmixture(df, outcome = task$outcome,
+sl_mix_lib = c("SL.mean", "SL.lm", "SL.ranger")
+sl_mix_1 = function(...) mixture_backfit_sl(..., estimator_mixture = sl_mix_lib)
+
+sl_mix_lib2 = c("SL.mean", "SL.lm", "SL.ranger", "tmle.SL.dbarts2")
+sl_mix_2 = function(...) mixture_backfit_sl(..., estimator_mixture = sl_mix_lib2)
+
+result = tlmixture(df,
+                   #df2,
+                   outcome = task$outcome,
                    exposures = task$exposures,
                    quantiles_exposures = quantiles_exposures,
                    #quantiles_mixtures = quantiles_mixtures,
                    quantiles_mixtures = 4,
                    #quantiles_mixtures = 5,
                    #estimator_outcome = estimators,
-                   estimator_outcome = c("SL.mean", "SL.lm"),
-                   cluster_exposures = cluster_exposures,
+                   estimator_outcome = c("SL.mean", "SL.lm", "SL.ranger"),
+                   #cluster_exposures = cluster_exposures,
                    #mixture_fn = tlmixture::mixture_glm,
-                   mixture_fn = tlmixture::mixture_lm,
+                   #mixture_fn = tlmixture::mixture_lm,
+                   #mixture_fn = tlmixture::mixture_backfit_lm,
+                   mixture_fn = mixture_backfit_lm,
+                   #mixture_fn = mixture_backfit_sl,
+                   #mixture_fn = sl_mix_1,
                    #folds_cvtmle = folds_cvtmle,
-                   folds_cvtmle = 3,
-                   #folds_cvtmle = 5,
+                   #folds_cvtmle = 3,
+                   folds_cvtmle = 5,
                    #folds_cvtmle = 10,
                    #folds_cvtmle = 20,
                    verbose = TRUE)
 
+result$combined$results
 result$combined$groups_df
 result$groups
+summary(result$groups$mixture_df)
+qplot(result$groups$mixture_df$all)
+```
+
+### Test backfit lm
+
+```{r backfit_test, eval = FALSE}
+df2 = df
+df2$z2 = NULL
+#res = mixture_backfit_lm(df2,
+res = mixture_backfit_sl(df2,
+                         task$outcome, task$exposures,
+                         max_iterations = 5L,
+                         verbose = TRUE)
+
+res
+res$coefs_mixture[50L, ]
+summary(res$reg_mixture)
+summary(res$reg_adjust)
+
+# Check prediction.
+preds = predict(res, data[, res$exposures])
+dim(preds)
+qplot(preds)
+preds = predict(res$reg_mixture, data[, res$exposures], onlySL = TRUE)
+str(preds)
 ```
 
 ### Review results
@@ -211,8 +255,10 @@ for (exposure in task$exposures) {
 ```{r data2_model}
 
 library(tlmixture)
+library(tmle)
 #folds_cvtmle = 2L
 folds_cvtmle = 5L
+#estimators = c("SL.mean", "SL.glmnet", "SL.ranger", "tmle.SL.dbarts2")
 estimators = c("SL.mean", "SL.glmnet", "SL.ranger")
 cluster_exposures = FALSE
 verbose = TRUE
@@ -241,14 +287,20 @@ result = tlmixture(df, outcome = task$outcome,
                    #quantiles_mixtures = quantiles_mixtures,
                    quantiles_mixtures = 4,
                    #quantiles_mixtures = 5,
-                   estimator_outcome = estimators,
+                   estimator_outcome = c("SL.lm", estimators),
                    cluster_exposures = cluster_exposures,
+                   #mixture_fn = sl_mix_2,
                    #folds_cvtmle = folds_cvtmle,
                    #folds_cvtmle = 3,
+                   #folds_cvtmle = 4,
                    folds_cvtmle = 5,
+                   # folds_cvtmle = 8,
                    #folds_cvtmle = 10,
                    #folds_cvtmle = 20,
                    verbose = TRUE)
+
+# TODO: compile mixture predictions from test folds so that we can analyze post-hoc.
+# result$folds[[1]]$test_results
 ```
 
 ### Review results
