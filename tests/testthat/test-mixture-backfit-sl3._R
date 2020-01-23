@@ -1,0 +1,97 @@
+# TODO: clean this up and use as a test script.
+
+### Test backfit sl3
+
+# ```{r backfit_test_sl3, eval = FALSE}
+df2 = df
+df2$z2 = NULL
+#res = mixture_backfit_lm(df2,
+
+sl3_mixture =  sl3::Lrnr_sl$new(learners =
+                                sl3::make_learner(sl3::Stack, 
+                                                  sl3::make_learner(sl3::Lrnr_mean),
+                                                  sl3::make_learner(sl3::Lrnr_glm)),
+                         metalearner = sl3::make_learner(sl3::Lrnr_nnls))
+
+sl3_confounders =  sl3::Lrnr_sl$new(learners =
+                                sl3::make_learner(sl3::Stack, 
+                                                  sl3::make_learner(sl3::Lrnr_mean),
+                                                  sl3::make_learner(sl3::Lrnr_glm)),
+                         metalearner = sl3::make_learner(sl3::Lrnr_nnls))
+
+res = mixture_backfit_sl3(df2,
+                         task$outcome, task$exposures,
+                         #estimator_mixture = sl3_mixture,
+                         #estimator_confounders = sl3_confounders,
+                         max_iterations = 5L,
+                         verbose = TRUE)
+
+res
+res$coefs_mixture[50L, ]
+summary(res$reg_mixture)
+summary(res$reg_adjust)
+
+# Check prediction.
+preds = predict(res, data[, res$exposures])
+dim(preds)
+qplot(preds)
+preds = predict(res$reg_mixture, data[, res$exposures], onlySL = TRUE)
+str(preds)
+result$groups$groups_df
+
+
+# ```{r sl3_test}
+library(sl3)
+data2 = data
+data2$offset = rnorm(nrow(data))
+sl3_task = make_sl3_Task(data = data2,
+                         covariates = c(task$exposures, task$covariates),
+                         offset = "offset",
+                         outcome = task$outcome, outcome_type = "continuous")
+
+
+fit_mix = sl3_mixture$train(sl3_task)
+fit_mix
+names(fit_mix)
+fit_mix$fit_object
+
+sl3_task_no_offset = sl3_task$clone()
+sl3_task_no_offset$internal_data$raw_data$offset
+
+# Non-cloned version.
+data2$offset2 = 0
+sl3_task_no_offset2 = make_sl3_Task(data = data2,
+                         covariates = c(task$exposures, task$covariates),
+                         offset = "offset2",
+                         outcome = task$outcome, outcome_type = "continuous")
+
+# Gives an error about predicting on a task without offsets.
+# Unless we create an offset and set to 0.
+preds = fit_mix$predict(sl3_task_no_offset2)
+qplot(preds)
+
+
+# Fix for sl3.
+(learner_names = apropos("^Lrnr_", ignore.case = FALSE, mode = "environment"))
+
+names(sl3_task)
+pryr::object_size(sl3_task)
+pryr::object_size(data)
+class(sl3_task$data)
+class(sl3_task$internal_data)
+
+lrnr_glm <- make_learner(Lrnr_glm)
+lrnr_mean <- make_learner(Lrnr_mean)
+lrnr_ranger100 <- make_learner(Lrnr_ranger, num.trees = 300, num.threads = get_cores())
+lrnr_glmnet <- make_learner(Lrnr_glmnet)
+lrnr_xgboost <- make_learner(Lrnr_xgboost, nrounds = 100, nthread = get_cores(), eta = 0.1)
+# stack <- make_learner(Stack, lrnr_glm, lrnr_mean)
+stack <- make_learner(Stack, lrnr_glm, lrnr_mean, lrnr_ranger100, lrnr_glmnet, lrnr_xgboost)
+sl <- Lrnr_sl$new(learners = stack,
+                  metalearner = make_learner(Lrnr_nnls))
+(sl_fit <- sl$train(sl3_task))
+rnr_sl_preds <- sl_fit$predict()
+head(lrnr_sl_preds, n = 20)
+summary(lrnr_sl_preds)
+library(ggplot2)
+qplot(lrnr_sl_preds)
