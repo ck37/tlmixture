@@ -32,6 +32,7 @@ mixture_backfit_sl3 =
            max_iterations = 10L,
            tolerance = 0.00001,
            quantiles = NULL, family = "continuous", verbose = FALSE,
+           debug = FALSE,
            ...) {
 
   if (verbose) {
@@ -47,8 +48,14 @@ mixture_backfit_sl3 =
   }
     
   confounders = names(data)[!names(data) %in% c(outcome, exposures)]
+  
+  if (debug) {
+    cat("Exposures:", exposures, "\n")
+    cat("Confounders:", confounders, "\n")
+  }
  
   # Initialize mixture offset
+  # sl3 expects offset to be on the probability scale rather than logit scale.
   data$offset_mixture = 0
   
   # Track coefficients over iterations (not used).
@@ -59,6 +66,11 @@ mixture_backfit_sl3 =
   #browser()
 
   for (iteration in seq(max_iterations)) {
+    
+    if (debug) {
+      cat("Mixture offset sd:", sd(data$offset_mixture), "\n")
+      print(summary(data$offset_mixture))
+    }
     
     # Setup mixture estimation task
     task_mixture = sl3::make_sl3_Task(data = data,
@@ -73,20 +85,43 @@ mixture_backfit_sl3 =
     
     fit_mix = estimator_mixture$train(task_mixture)
 
-    if (verbose) {
+    if (debug) {
       cat("Mixture regression:\n")
       print(fit_mix)
     }
     
+    # Update offset to be 0.
+    data$offset_mixture = 0
+    
+    task_mixture = sl3::make_sl3_Task(data = data,
+                                      covariates = exposures,
+                                      outcome = outcome,
+                                      offset = "offset_mixture",
+                                      # Continuous or binomial
+                                      outcome_type = family)
+    
     # Predicted mixture value
-    f_a = fit_mix$predict()
+    # TODO: do we need to reset the offset to be 0?
+    f_a = fit_mix$predict(task_mixture)
+    
+    if (debug) {
+      print(qplot(f_a) + ggtitle("mixture f_a iteration", iteration) + theme_minimal())
+    }
 
     # Calculate correction
     correction = mean(f_a)
+    
+    if (debug) {
+      cat("Correction:", correction, "\n")
+    }
 
     # Residualize
     # y_star = data[[outcome]] - (f_a - correction)
     data$offset_confounders = f_a - correction
+    #if (family == "binomial") {
+    #  # sl3 expects offset to be on the probability scale rather than logit scale.
+    #  data$offset_confounders = qlogis(data$offset_confounders)
+    #}
     
     # Setup confounder adjustment task
     # TODO: don't use an offset if family = gaussian, to support more learners.
@@ -101,17 +136,36 @@ mixture_backfit_sl3 =
     
     fit_confounders = estimator_confounders$train(task_confounders)
 
-    if (verbose) {
+    if (debug) {
       cat("Confounder adjustment regression:\n")
       print(fit_confounders)
     }
+    
+    # Update offset to be 0.
+    data$offset_confounders = 0
+    
+    task_confounders = sl3::make_sl3_Task(data = data,
+                                      covariates = confounders,
+                                      outcome = outcome,
+                                      offset = "offset_confounders",
+                                      # Continuous or binomial
+                                      outcome_type = family)
 
-    g_w = fit_confounders$predict()
+    g_w = fit_confounders$predict(task_confounders)
+    
+    if (debug) {
+      print(qplot(g_w) + ggtitle("g_w iteration", iteration) + theme_minimal())
+    }
 
     # Residualize
     #y_star = data[[outcome]] - g_w
     # Update offset
+    # sl3 expects offset to be on the probability scale rather than logit scale.
     data$offset_mixture = g_w
+    
+    if (debug) {
+      cat("Correlation of g_w and f_a:", cor(f_a, g_w), "\n")
+    }
 
     # Check for convergence and stop early
     # Sum of the absolute change in the coefficients
@@ -166,6 +220,7 @@ mixture_backfit_sl3 =
   
   # Check if our predicted mixture is constant, meaning that SL.mean has 100% weight.
   if (sd(f_a) == 0) {
+    cat("Error: mixture prediction has no variation.\n")
     browser()
   }
 

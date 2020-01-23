@@ -20,6 +20,7 @@ mixture_backfit_sl3(
   quantiles = NULL,
   family = "continuous",
   verbose = FALSE,
+  debug = FALSE,
   ...
 )
 }
