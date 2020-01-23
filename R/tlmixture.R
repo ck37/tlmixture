@@ -20,6 +20,7 @@
 #' @param cluster_exposures Whether to automatically cluster a vector of exposures into
 #' sub-groups (default FALSE; TRUE not yet supported).
 #' @param mixture_fn Current options: mixture_glm, mixture_pls, or mixture_sl
+#' @param refit_mixtures After CV-TMEL, refit mixture functions to full dataset.
 #' @param verbose If TRUE, display more detailed info during execution.
 #'
 #' @export
@@ -33,6 +34,7 @@ tlmixture =
            estimator_propensity = estimator_outcome,
            cluster_exposures = FALSE,
            mixture_fn = mixture_glm,
+           refit_mixtures = TRUE,
            verbose = FALSE
            ) {
 
@@ -134,6 +136,7 @@ tlmixture =
                             outcome = outcome,
                             exposures = exposures,
                             mixture_fn = mixture_fn,
+                            refit_mixtures = refit_mixtures,
                             verbose = verbose)
   
   ##################

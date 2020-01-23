@@ -16,6 +16,7 @@ tlmixture(
   estimator_propensity = estimator_outcome,
   cluster_exposures = FALSE,
   mixture_fn = mixture_glm,
+  refit_mixtures = TRUE,
   verbose = FALSE
 )
 }
@@ -45,6 +46,8 @@ a vector of pre-clustered exposures.}
 sub-groups (default FALSE; TRUE not yet supported).}
 
 \item{mixture_fn}{Current options: mixture_glm, mixture_pls, or mixture_sl}
+
+\item{refit_mixtures}{After CV-TMEL, refit mixture functions to full dataset.}
 
 \item{verbose}{If TRUE, display more detailed info during execution.}
 }
