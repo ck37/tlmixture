@@ -20,7 +20,7 @@ mixture_backfit_sl3 =
   function(data, outcome, exposures,
            estimator_mixture =
              sl3::Lrnr_sl$new(learners =
-                                sl3::make_learner(sl3::Stack, 
+                                sl3::make_learner(sl3::Stack,
                                                   sl3::make_learner(sl3::Lrnr_mean),
                                                   sl3::make_learner(sl3::Lrnr_glm)),
                          metalearner = sl3::make_learner(sl3::Lrnr_nnls)),
@@ -38,40 +38,40 @@ mixture_backfit_sl3 =
   if (verbose) {
     cat("Create mixture via backfit SL3.\n")
   }
-    
+
   if (is.null(estimator_confounders)) {
     estimator_confounders = estimator_mixture$clone()
   }
-    
+
   if (family == "binary") {
     family = "binomial"
   }
-    
+
   confounders = names(data)[!names(data) %in% c(outcome, exposures)]
-  
+
   if (debug) {
     cat("Exposures:", exposures, "\n")
     cat("Confounders:", confounders, "\n")
   }
- 
+
   # Initialize mixture offset
   # sl3 expects offset to be on the probability scale rather than logit scale.
   data$offset_mixture = 0
-  
+
   # Track coefficients over iterations (not used).
   coefs_mixture = data.frame(matrix(nrow = max_iterations,
                     ncol = length(exposures) + 1))
   colnames(coefs_mixture) = c("Intercept", exposures)
-  
+
   #browser()
 
   for (iteration in seq(max_iterations)) {
-    
+
     if (debug) {
       cat("Mixture offset sd:", sd(data$offset_mixture), "\n")
       print(summary(data$offset_mixture))
     }
-    
+
     # Setup mixture estimation task
     task_mixture = sl3::make_sl3_Task(data = data,
                                       covariates = exposures,
@@ -79,40 +79,46 @@ mixture_backfit_sl3 =
                                       offset = "offset_mixture",
                                       # Continuous or binomial
                                       outcome_type = family)
-    
+
     # TODO: incorporate the number of SL CV folds specified somehow.
     # TODO: use metalearner SuperLearner::method.CC_LS
-    
+
     fit_mix = estimator_mixture$train(task_mixture)
 
     if (debug) {
       cat("Mixture regression:\n")
       print(fit_mix)
     }
-    
+
     # Update offset to be 0.
     data$offset_mixture = 0
-    
+
     task_mixture = sl3::make_sl3_Task(data = data,
                                       covariates = exposures,
                                       outcome = outcome,
                                       offset = "offset_mixture",
                                       # Continuous or binomial
                                       outcome_type = family)
-    
+
     # Predicted mixture value
     # TODO: do we need to reset the offset to be 0?
     f_a = fit_mix$predict(task_mixture)
-    
+
     if (debug) {
       print(qplot(f_a) + ggtitle("mixture f_a iteration", iteration) + theme_minimal())
     }
 
     # Calculate correction
     correction = mean(f_a)
-    
+
     if (debug) {
       cat("Correction:", correction, "\n")
+    }
+
+    # Check if our predicted mixture is constant, meaning that SL.mean has 100% weight.
+    if (sd(f_a) == 0) {
+      cat("Error: mixture prediction has no variation.\n")
+      browser()
     }
 
     # Residualize
@@ -122,7 +128,7 @@ mixture_backfit_sl3 =
     #  # sl3 expects offset to be on the probability scale rather than logit scale.
     #  data$offset_confounders = qlogis(data$offset_confounders)
     #}
-    
+
     # Setup confounder adjustment task
     # TODO: don't use an offset if family = gaussian, to support more learners.
     # Just use residual instead.
@@ -133,17 +139,17 @@ mixture_backfit_sl3 =
                                       offset = "offset_confounders",
                                       # Continuous or binomial
                                       outcome_type = family)
-    
+
     fit_confounders = estimator_confounders$train(task_confounders)
 
     if (debug) {
       cat("Confounder adjustment regression:\n")
       print(fit_confounders)
     }
-    
+
     # Update offset to be 0.
     data$offset_confounders = 0
-    
+
     task_confounders = sl3::make_sl3_Task(data = data,
                                       covariates = confounders,
                                       outcome = outcome,
@@ -152,7 +158,7 @@ mixture_backfit_sl3 =
                                       outcome_type = family)
 
     g_w = fit_confounders$predict(task_confounders)
-    
+
     if (debug) {
       print(qplot(g_w) + ggtitle("g_w iteration", iteration) + theme_minimal())
     }
@@ -162,7 +168,7 @@ mixture_backfit_sl3 =
     # Update offset
     # sl3 expects offset to be on the probability scale rather than logit scale.
     data$offset_mixture = g_w
-    
+
     if (debug) {
       cat("Correlation of g_w and f_a:", cor(f_a, g_w), "\n")
     }
@@ -216,13 +222,9 @@ mixture_backfit_sl3 =
     old_f_a = f_a
     old_g_w = g_w
   }
-  
-  
-  # Check if our predicted mixture is constant, meaning that SL.mean has 100% weight.
-  if (sd(f_a) == 0) {
-    cat("Error: mixture prediction has no variation.\n")
-    browser()
-  }
+
+
+
 
   # TODO: consider checking if sd(f_a) = 0, in which case SL.mean is the estimator
   # and we won't have any variance in the histogram.
@@ -251,22 +253,22 @@ mixture_backfit_sl3 =
 #' @param data tbd
 #' @param ... tbd
 predict.mixture_backfit_sl3 = function(object, data, ...) {
-  
+
   # We need to create a blank offset to avoid an sl3 error.
   data$offset_mixture = 0
-  
+
   # Setup mixture estimation task
   task_mixture = sl3::make_sl3_Task(data = data,
                                     covariates = object$exposures,
                                     offset = "offset_mixture",
                                     # Continuous or binomial
                                     outcome_type = object$family)
-  
-  
+
+
   preds = object$reg_mixture$predict(task_mixture)
-  
+
   # Clear this variable in case we're modifying a data.table by reference.
   data$offset_mixture = NULL
-  
+
   return(preds)
 }
