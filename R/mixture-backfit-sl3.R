@@ -8,6 +8,7 @@
 #' @param exposure_groups List of all exposure groups
 #' @param max_iterations tbd
 #' @param tolerance tbd
+#' @param adjust_other_exposures Whether or not to include other exposure groups as confounders to adjust for. Default TRUE.
 #' @param quantiles tbd
 #' @param family Not used for this mixture estimator.
 #' @param verbose tbd
@@ -31,6 +32,7 @@ mixture_backfit_sl3 =
            exposure_groups = NULL,
            max_iterations = 10L,
            tolerance = 0.00001,
+           adjust_other_exposures = TRUE,
            quantiles = NULL, family = "continuous", verbose = FALSE,
            debug = FALSE,
            ...) {

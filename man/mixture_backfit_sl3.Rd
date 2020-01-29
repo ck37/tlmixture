@@ -17,6 +17,7 @@ mixture_backfit_sl3(
   exposure_groups = NULL,
   max_iterations = 10L,
   tolerance = 1e-05,
+  adjust_other_exposures = TRUE,
   quantiles = NULL,
   family = "continuous",
   verbose = FALSE,
@@ -40,6 +41,8 @@ mixture_backfit_sl3(
 \item{max_iterations}{tbd}
 
 \item{tolerance}{tbd}
+
+\item{adjust_other_exposures}{Whether or not to include other exposure groups as confounders to adjust for. Default TRUE.}
 
 \item{quantiles}{tbd}
 
