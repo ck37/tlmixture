@@ -95,7 +95,7 @@ analyze_mixture =
                         levels(data$quantile))
 
     # TODO: make this a separate table.
-    tab2 = cbind("Weights" = c(NA, NA, ordered_weights), tab2)
+    #tab2 = cbind("Weights" = c(NA, NA, ordered_weights), tab2)
 
     tab2 = round(tab2, round_digits)
 
@@ -135,7 +135,7 @@ analyze_mixture =
       #browser()
 
       # TODO: make this a separate table.
-      tab3 = cbind("Weights" = rep(0, nrow(tab3)), tab3)
+      #tab3 = cbind("Weights" = rep(0, nrow(tab3)), tab3)
       #tab3$Weights = NA
 
       tab3 = round(tab3, round_digits)
