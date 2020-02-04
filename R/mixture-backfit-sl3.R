@@ -105,7 +105,7 @@ mixture_backfit_sl3 =
     f_a = fit_mix$predict(task_mixture)
 
     if (debug) {
-      print(qplot(f_a) + ggtitle("mixture f_a iteration", iteration) + theme_minimal())
+      print(qplot(f_a) + ggtitle(paste("mixture f_a iteration", iteration)) + theme_minimal())
     }
 
     # Calculate correction
@@ -160,7 +160,7 @@ mixture_backfit_sl3 =
     g_w = fit_confounders$predict(task_confounders)
 
     if (debug) {
-      print(qplot(g_w) + ggtitle("g_w iteration", iteration) + theme_minimal())
+      print(qplot(g_w) + ggtitle(paste("g_w iteration", iteration)) + theme_minimal())
     }
 
     # Residualize
@@ -234,6 +234,7 @@ mixture_backfit_sl3 =
                  coefs_mixture = coefs_mixture,
                  outcome = outcome,
                  exposures = exposures,
+                 confounders = confounders,
                  iterations = iteration,
                  max_iterations = max_iterations,
                  converged = iteration < max_iterations,
@@ -251,24 +252,47 @@ mixture_backfit_sl3 =
 #'
 #' @param object tbd
 #' @param data tbd
+#' @param type "mixture" (default) or "confounders"
 #' @param ... tbd
-predict.mixture_backfit_sl3 = function(object, data, ...) {
+#' 
+#' @export
+predict.mixture_backfit_sl3 = function(object, data, type = "mixture", ...) {
 
-  # We need to create a blank offset to avoid an sl3 error.
-  data$offset_mixture = 0
-
-  # Setup mixture estimation task
-  task_mixture = sl3::make_sl3_Task(data = data,
-                                    covariates = object$exposures,
-                                    offset = "offset_mixture",
-                                    # Continuous or binomial
-                                    outcome_type = object$family)
-
-
-  preds = object$reg_mixture$predict(task_mixture)
-
-  # Clear this variable in case we're modifying a data.table by reference.
-  data$offset_mixture = NULL
+  if (type == "mixture") {
+    # We need to create a blank offset to avoid an sl3 error.
+    data$offset_mixture = 0
+  
+    # Setup mixture estimation task
+    task_mixture = sl3::make_sl3_Task(data = data,
+                                      covariates = object$exposures,
+                                      offset = "offset_mixture",
+                                      # Continuous or binomial
+                                      outcome_type = object$family)
+  
+  
+    preds = object$reg_mixture$predict(task_mixture)
+  
+    # Clear this variable in case we're modifying a data.table by reference.
+    data$offset_mixture = NULL
+  } else {
+    # We need to create a blank offset to avoid an sl3 error.
+    # TODO: or should this be set to the predicted mixture value?
+    data$offset_confounders = 0
+  
+    # Setup confounder estimation task
+    task_confounders =
+      sl3::make_sl3_Task(data = data,
+                         covariates = object$confounders,
+                         offset = "offset_confounders",
+                         # Continuous or binomial
+                         outcome_type = object$family)
+  
+  
+    preds = object$reg_adjust$predict(task_confounders)
+  
+    # Clear this variable in case we're modifying a data.table by reference.
+    data$offset_confounders = NULL
+  }
 
   return(preds)
 }
