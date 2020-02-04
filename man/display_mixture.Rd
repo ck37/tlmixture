@@ -4,7 +4,13 @@
 \alias{display_mixture}
 \title{Display mixture}
 \usage{
-display_mixture(analysis, digits = 3)
+display_mixture(
+  analysis,
+  digits = 3,
+  caption = "Mixture analysis",
+  label = NULL,
+  booktabs = TRUE
+)
 }
 \arguments{
 \item{analysis}{tbd}
