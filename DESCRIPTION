@@ -25,7 +25,8 @@ Suggests:
     ranger,
     rio,
     speedglm,
-    testthat
+    testthat,
+    xgboost
 Imports: 
     ck37r,
     dplyr,
