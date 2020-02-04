@@ -20,6 +20,10 @@ analyze_exposure_groups = function(combined_results,
                                    refit_mixtures = FALSE,
                                    verbose = FALSE) {
 
+  if (verbose) {
+    cat("\nAnalyzing exposure groups.\n")
+  }
+
   # Convert the exposures vector to a list.
   # TODO: do this earlier in tlmixture()
   if (!is.list(exposures)) {
@@ -31,7 +35,7 @@ analyze_exposure_groups = function(combined_results,
   # Set to the raw pval by default, in case there is only 1 group.
   groups_df$rd_pval_fdr = groups_df$rd_val
 
-  if (nrow(groups_df) > 1L) {
+  if ("data.frame" %in% class(groups_df) && nrow(groups_df) > 1L) {
 
     # Calculate Benjamini-Hochberg FDR-adjusted p-values.
     groups_df$rd_pval_fdr = stats::p.adjust(groups_df$rd_pval, method = "BH")
@@ -41,12 +45,12 @@ analyze_exposure_groups = function(combined_results,
     groups_df = groups_df %>% arrange(rd_pval_fdr, rd_pval, rd_se) %>% as.data.frame()
   }
 
-  cat("Refitting mixtures to full data.\n")
 
   mixture_df = NULL
   mixture_objs = list()
 
   if (refit_mixtures) {
+    cat("Refitting mixtures to full data.\n")
 
     # Loop over exposure groups and fit mixture to full dataset.
     for (group_i in seq(length(exposures))) {
