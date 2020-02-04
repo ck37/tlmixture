@@ -18,6 +18,7 @@ mixture_backfit_sl3(
   max_iterations = 10L,
   tolerance = 1e-05,
   adjust_other_exposures = TRUE,
+  force_offset = TRUE,
   quantiles = NULL,
   family = "continuous",
   verbose = FALSE,
