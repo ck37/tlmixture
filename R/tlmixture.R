@@ -138,7 +138,7 @@ tlmixture =
                             mixture_fn = mixture_fn,
                             refit_mixtures = refit_mixtures,
                             verbose = verbose)
-  
+
   ##################
   # Compile everything we want to return.
   results =
@@ -156,8 +156,12 @@ tlmixture =
          quantiles_mixtures = quantiles_mixtures,
          rescaled = needs_rescale,
          family = family)
-  
+
   class(results) = "tlmixture"
+
+  if (verbose) {
+    cat("tlmixture analysis complete.\n")
+  }
 
   return(results)
 }
