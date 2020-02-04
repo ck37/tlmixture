@@ -69,7 +69,7 @@ qplot(log(data[[task$outcome]]))
 
 ```
 
-### Estimation
+### Prep to run
 
 ```{r data1_model}
 
@@ -157,29 +157,34 @@ estimator_sl3 = function(...) {
 }
 ```
 
-```{r run_tlmixture}
+### Run TLMixture
 
-result = tlmixture(df, outcome = task$outcome,
-                   exposures = task$exposures,
-                   quantiles_exposures = quantiles_exposures,
-                   #quantiles_mixtures = quantiles_mixtures,
-                   quantiles_mixtures = 3,
-                   #quantiles_mixtures = 5,
-                   #estimator_outcome = estimators,
-                   #estimator_outcome = c("SL.mean", "SL.lm"),
-                   estimator_outcome = c("SL.mean", "lm2", "ranger_fast"),
-                   cluster_exposures = cluster_exposures,
-                   #mixture_fn = tlmixture::mixture_backfit_glm,
-                   #mixture_fn = mixture_backfit_glm,
-                   #mixture_fn = tlmixture::mixture_backfit_lm,
-                   mixture_fn = mixture_backfit_sl3,
-                   #mixture_fn = estimator_sl3,
-                   #folds_cvtmle = folds_cvtmle,
-                   #folds_cvtmle = 3,
-                   folds_cvtmle = 5,
-                   #folds_cvtmle = 10,
-                   #folds_cvtmle = 20,
-                   verbose = TRUE)
+```{r data1_run_tlmixture}
+
+set.seed(1, "L'Ecuyer-CMRG")
+result =
+  tlmixture(df, outcome = task$outcome,
+            exposures = task$exposures,
+            quantiles_exposures = quantiles_exposures,
+            #quantiles_mixtures = quantiles_mixtures,
+            #quantiles_mixtures = 3,
+            quantiles_mixtures = 4,
+            #quantiles_mixtures = 5,
+            #estimator_outcome = estimators,
+            #estimator_outcome = c("SL.mean", "SL.lm"),
+            estimator_outcome = c("SL.mean", "lm2", "ranger_fast"),
+            cluster_exposures = cluster_exposures,
+            #mixture_fn = tlmixture::mixture_backfit_glm,
+            #mixture_fn = mixture_backfit_glm,
+            #mixture_fn = tlmixture::mixture_backfit_lm,
+            mixture_fn = mixture_backfit_sl3,
+            #mixture_fn = estimator_sl3,
+            #folds_cvtmle = folds_cvtmle,
+            #folds_cvtmle = 3,
+            folds_cvtmle = 5,
+            #folds_cvtmle = 10,
+            #folds_cvtmle = 20,
+            verbose = TRUE)
 
 result$combined$results
 result$combined$groups_df
@@ -235,13 +240,41 @@ colMeans(weight_df)
 display_mixture(mix_result)
 # Run again, this time as latex.
 options(knitr.table.format = "latex")
-kab_tab = display_mixture(mix_result)
+kab_tab = display_mixture(mix_result,
+                          label = "mixture-data1",
+                          caption = "Summary of mixture analysis for dataset 1")
 cat(kab_tab, file = "data1-summary-table.tex")
 # Restore previous table format setting.
 # We unfortunately can't just assign it to NULL :/ Have to pick a specific value.
 options(knitr.table.format = "html")
       
 ```
+
+### Explore mixture
+
+```{r explore_mixture}
+# Loop over each variable and plot lowess smooth of that variable vs. mixture.
+task$exposures
+
+for (exposure_i in task$exposures) {
+
+  gg_df = cbind.data.frame(data[, exposure_i, drop = FALSE],
+                           result$groups$mixture_df)
+  g = ggplot(data = gg_df, aes(x = get(exposure_i), y = all)) +
+    geom_smooth() +
+    labs(y = "Mixture",
+         title = paste("Mixture relationship of exposure", exposure_i)) +
+    theme_minimal()
+  print(g)
+}
+
+reg = lm(result$groups$mixture_df$all ~ .,
+         data = data[, c(task$exposures, task$covariates)])
+summary(reg)
+
+
+```
+
 
 ## Simulated Dataset 2
 
@@ -290,7 +323,7 @@ for (exposure in task2$exposures) {
 
 ```
 
-### Estimation
+### Prep to run
 
 ```{r data2_model}
 
@@ -321,6 +354,11 @@ str(df2)
 # Create a noise z2 - temporary.
 # TODO: fix tlmixture to work with 1 or 0 adjustment variables.
 #df$z2 = rnorm(nrow(df))
+```
+
+### Run TLMixture
+
+```{r data2_tlmixture}
 
 result2 = tlmixture(df2, outcome = task2$outcome,
                    exposures = exposures,
@@ -366,7 +404,9 @@ plot_analysis(mix_result2)
 display_mixture(mix_result2)
 # Run again, this time as latex.
 options(knitr.table.format = "latex")
-kab_tab = display_mixture(mix_result2)
+kab_tab = display_mixture(mix_result2,
+                          label = "mixture-data2",
+                          caption = "Summary of mixture analysis for dataset 2")
 cat(kab_tab, file = "data2-summary-table.tex")
 # Restore previous table format setting.
 options(knitr.table.format = "html")
