@@ -24,7 +24,9 @@ Suggests:
     MASS,
     ranger,
     rio,
-    testthat
+    speedglm,
+    testthat,
+    xgboost
 Imports: 
     ck37r,
     dplyr,
@@ -42,5 +44,5 @@ Imports:
 Depends:
     SuperLearner
 Remotes: 
-    github::ck37/ck37r
+    github::ck37/ck37r,
     github::tlverse/sl3

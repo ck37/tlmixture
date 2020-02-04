@@ -136,7 +136,7 @@ lm2 = function(...) {
 library(sl3)
 
 lrnr_glm <- make_learner(Lrnr_glm)
-lrnr_glm_fast <- make_learner(Lrnr_glm_fast)
+#lrnr_glm_fast <- make_learner(Lrnr_glm_fast)
 lrnr_mean <- make_learner(Lrnr_mean)
 # Can't use ranger - doesn't support offsets (presumably).
 # lrnr_ranger100 <- make_learner(Lrnr_ranger, num.trees = 100)
@@ -145,8 +145,10 @@ lrnr_glmnet <- make_learner(Lrnr_glmnet)
 lrnr_xgb <- make_learner(Lrnr_xgboost, nrounds = 100, nthread = get_cores(), eta = 0.1)
 # stack <- make_learner(Stack, lrnr_glm, lrnr_mean)
 stack <- make_learner(Stack,
-                     # lrnr_glm,
-                      lrnr_mean, lrnr_glm_fast, lrnr_xgb)#, lrnr_glmnet)
+                      lrnr_glm,
+                      lrnr_mean,
+                      #lrnr_glm_fast,
+                      lrnr_xgb)#, lrnr_glmnet)
 sl <- Lrnr_sl$new(learners = stack,
                   metalearner = make_learner(Lrnr_nnls))
 
@@ -193,7 +195,7 @@ qplot(result$groups$mixture_df$all)
 
 ### Test backfit lm
 
-```{r backfit_test, eval = FALSE}
+```{r test_backfit_lm, eval = FALSE}
 df2 = df
 df2$z2 = NULL
 #res = mixture_backfit_lm(df2,
@@ -216,6 +218,51 @@ str(preds)
 result$groups$groups_df
 ```
 
+### Run mixture_sl3 on full data
+
+```{r test_mixture_backfit_sl3, eval = FALSE}
+#res = mixture_backfit_lm(df2,
+res = mixture_backfit_sl3(df,
+                         task$outcome, task$exposures,
+                         estimator_mixture = sl$clone(),
+                         estimator_confounders = sl$clone(),
+                         max_iterations = 10L,
+                         debug = TRUE,
+                         verbose = TRUE)
+
+# Review sl3 learner for mixture
+res$reg_mixture
+# Review sl3 learner for confounder adjustment
+res$reg_adjust
+
+# Check prediction.
+preds = predict(res, data[, res$exposures])
+qplot(preds) + theme_minimal()
+
+# Try to predict the confounder regression.
+preds2 = predict(res, df, type = "confounder")
+qplot(preds2) + theme_minimal()
+
+# Examine predictors of mixture
+# Making one error: X2 should be significant and positive
+reg = glm(preds ~ ., data = data[, res$exposures])
+summary(reg)
+
+# Examine predictors of confounding adjustment
+reg2 = glm(preds2 ~ ., data = df[, res$confounders])
+# NOTE: z2 is a noise variable, so we shouldn't find it to be significant.
+summary(reg2)
+
+# Try including all data, but exclude outcome. 
+reg3 = glm(preds2 ~ ., data = df[, !names(df) %in% c("Y")])
+# Looks like the direction on exposures is generally swapped.
+summary(reg3)
+
+# TODO: need to make an sl3 task for prediction.
+if (FALSE) {
+  preds3 = res$reg_mixture$predict(data[, res$exposures])
+}
+```
 
 ### Review results
 
@@ -382,6 +429,56 @@ result2 = tlmixture(df2, outcome = task2$outcome,
 
 # TODO: compile mixture predictions from test folds so that we can analyze post-hoc.
 # result$folds[[1]]$test_results
+```
+
+### Run mixture_sl3 on full data
+
+```{r data2_test_mixture_backfit_sl3, eval = FALSE}
+res2 = mixture_backfit_sl3(df2,
+                         task2$outcome, task2$exposures,
+                         estimator_mixture = sl$clone(),
+                         estimator_confounders = sl$clone(),
+                         max_iterations = 10L,
+                         debug = TRUE,
+                         verbose = TRUE)
+
+# Review sl3 learner for mixture
+res2$reg_mixture
+# Review sl3 learner for confounder adjustment
+res2$reg_adjust
+
+# Check prediction.
+preds_d2 = predict(res2, df2[, res2$exposures])
+qplot(preds_d2) + theme_minimal()
+
+# Try to predict the confounder regression.
+preds2_d2 = predict(res2, df2, type = "confounder")
+qplot(preds2_d2) + theme_minimal()
+
+# Examine predictors of mixture
+# Making one error: X2 should be significant and positive
+reg_d2 = glm(preds_d2 ~ ., data = data2[, res2$exposures])
+summary(reg_d2)
+
+# Examine predictors of confounding adjustment
+reg2_d2 = glm(preds2_d2 ~ ., data = df2[, res2$confounders])
+# NOTE: z2 is a noise variable, so we shouldn't find it to be significant.
+summary(reg2_d2)
+
+# Try including all data, but exclude outcome. 
+reg3_d2 = glm(preds2_d2 ~ ., data = df2[, !names(df2) %in% c("Y")])
+# Looks like the direction on exposures is generally swapped.
+summary(reg3_d2)
+
+
+# Mixture preds: Try including all data, but exclude outcome. 
+reg4_d2 = glm(preds_d2 ~ ., data = df2[, !names(df2) %in% c("Y")])
+# Looks like the direction on exposures is generally swapped.
+summary(reg4_d2)
+# TODO: need to make an sl3 task for prediction.
+if (FALSE) {
+  preds3_d2 = res2$reg_mixture$predict(data2[, res2$exposures])
+}
 ```
 
 ### Review results
