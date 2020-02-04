@@ -288,7 +288,7 @@ mixture_backfit_sl3 =
 predict.mixture_backfit_sl3 = function(object, data, type = "mixture", ...) {
 
   if (type == "mixture") {
-    if (family == "binomial") {
+    if (object$family == "binomial") {
       # We need to create a blank offset to avoid an sl3 error.
       data$offset_mixture = 0
     
@@ -308,14 +308,14 @@ predict.mixture_backfit_sl3 = function(object, data, type = "mixture", ...) {
   
     preds = object$reg_mixture$predict(task_mixture)
   
-    if (family == "binomial") {
+    if (object$family == "binomial") {
       # Clear this variable in case we're modifying a data.table by reference.
       data$offset_mixture = NULL
     }
   } else {
     # We need to create a blank offset to avoid an sl3 error.
     # TODO: or should this be set to the predicted mixture value?
-    if (family == "binomial") {
+    if (object$family == "binomial") {
       data$offset_confounders = 0
     
       # Setup confounder estimation task
@@ -334,7 +334,7 @@ predict.mixture_backfit_sl3 = function(object, data, type = "mixture", ...) {
   
     preds = object$reg_adjust$predict(task_confounders)
   
-    if (family == "binomial") {
+    if (object$family == "binomial") {
       # Clear this variable in case we're modifying a data.table by reference.
       data$offset_confounders = NULL
     }

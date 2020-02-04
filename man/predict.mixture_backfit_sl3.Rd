@@ -4,12 +4,14 @@
 \alias{predict.mixture_backfit_sl3}
 \title{tbd}
 \usage{
-\method{predict}{mixture_backfit_sl3}(object, data, ...)
+\method{predict}{mixture_backfit_sl3}(object, data, type = "mixture", ...)
 }
 \arguments{
 \item{object}{tbd}
 
 \item{data}{tbd}
+
+\item{type}{"mixture" (default) or "confounders"}
 
 \item{...}{tbd}
 }
