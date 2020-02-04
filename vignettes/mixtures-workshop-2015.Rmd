@@ -143,17 +143,27 @@ lrnr_mean <- make_learner(Lrnr_mean)
 # TODO: add offset support to Lrnr_glmnet.
 lrnr_glmnet <- make_learner(Lrnr_glmnet)
 lrnr_xgb <- make_learner(Lrnr_xgboost, nrounds = 100, nthread = get_cores(), eta = 0.1)
+lrnr_xgb2 <- make_learner(Lrnr_xgboost, nrounds = 40, nthread = get_cores(), eta = 0.3, max_depth = 3L)
+
 # stack <- make_learner(Stack, lrnr_glm, lrnr_mean)
+sl3_screen_cor <- make_learner(Lrnr_screener_corP)
+sl3_cor_glm <- make_learner(Pipeline, sl3_screen_cor, lrnr_glm)
+
 stack <- make_learner(Stack,
                       lrnr_glm,
+                      sl3_cor_glm,
                       lrnr_mean,
                       #lrnr_glm_fast,
-                      lrnr_xgb)#, lrnr_glmnet)
+                      lrnr_xgb,
+                      lrnr_xgb2)#, lrnr_glmnet)
 sl <- Lrnr_sl$new(learners = stack,
-                  metalearner = make_learner(Lrnr_nnls))
+                  metalearner = make_learner(Lrnr_nnls, convex = TRUE))
 
 estimator_sl3 = function(...) {
   tlmixture::mixture_backfit_sl3(...,
+                                 debug = TRUE,
+                                 max_iterations = 3L,
+                                 #max_iterations = 10L,
                                  estimator_mixture = sl$clone(),
                                  estimator_confounders = sl$clone())
 }
@@ -169,8 +179,8 @@ result =
             exposures = task$exposures,
             quantiles_exposures = quantiles_exposures,
             #quantiles_mixtures = quantiles_mixtures,
-            #quantiles_mixtures = 3,
             quantiles_mixtures = 4,
+            #quantiles_mixtures = 2,
             #quantiles_mixtures = 5,
             #estimator_outcome = estimators,
             #estimator_outcome = c("SL.mean", "SL.lm"),
@@ -179,15 +189,16 @@ result =
             #mixture_fn = tlmixture::mixture_backfit_glm,
             #mixture_fn = mixture_backfit_glm,
             #mixture_fn = tlmixture::mixture_backfit_lm,
-            mixture_fn = mixture_backfit_sl3,
-            #mixture_fn = estimator_sl3,
+            #mixture_fn = mixture_backfit_sl3,
+            mixture_fn = estimator_sl3,
+            folds_cvtmle = 4,
             #folds_cvtmle = folds_cvtmle,
             #folds_cvtmle = 3,
-            folds_cvtmle = 5,
+            #folds_cvtmle = 2,
             #folds_cvtmle = 10,
             #folds_cvtmle = 20,
             verbose = TRUE)
-
+result
 result$combined$results
 result$combined$groups_df
 qplot(result$groups$mixture_df$all)
@@ -226,7 +237,8 @@ res = mixture_backfit_sl3(df,
                          task$outcome, task$exposures,
                          estimator_mixture = sl$clone(),
                          estimator_confounders = sl$clone(),
-                         max_iterations = 10L,
+                         #max_iterations = 10L,
+                         max_iterations = 5L,
                          debug = TRUE,
                          verbose = TRUE)
 
@@ -429,6 +441,7 @@ result2 = tlmixture(df2, outcome = task2$outcome,
 
 # TODO: compile mixture predictions from test folds so that we can analyze post-hoc.
 # result$folds[[1]]$test_results
+result2
 ```
 
 ### Run mixture_sl3 on full data
