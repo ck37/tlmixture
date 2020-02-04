@@ -2,6 +2,7 @@
 
 S3method(predict,mixture_backfit_sl3)
 S3method(predict,mixture_pls)
+S3method(print,tlmixture)
 export(analyze_mixture)
 export(bound)
 export(display_mixture)

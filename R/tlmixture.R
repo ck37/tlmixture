@@ -156,6 +156,8 @@ tlmixture =
          quantiles_mixtures = quantiles_mixtures,
          rescaled = needs_rescale,
          family = family)
+  
+  class(results) = "tlmixture"
 
   return(results)
 }
