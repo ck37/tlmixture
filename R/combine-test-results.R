@@ -37,6 +37,11 @@ combine_test_results =
   # Loop over exposure groups.
   for (group_i in seq(length(exposure_groups))) {
 
+    group_name = names(exposure_groups)[group_i]
+    if (verbose) {
+      cat("Combining group", group_name, "\n")
+    }
+
     # Attempt to recover from any errors that occur during this analysis.
     # If an exposure group had a zero-variation mixture function then all
     # of this analysis will fail.
@@ -85,12 +90,12 @@ combine_test_results =
           fold = result[[fold_i]]
 
           # Check if estimation failed for this group in this fold.
-          if (!group_i %in% names(fold$test_results)) {
+          if (!group_name %in% names(fold$test_results)) {
             return(NULL)
           }
 
           # Return the weights for this group, across all training folds.
-          df = fold$test_results[[group_i]]
+          df = fold$test_results[[group_name]]
 
           # Restrict to the current quantile that we're analyzing
           df = df[df$quantile == quantile_i, ]
