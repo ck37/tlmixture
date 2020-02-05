@@ -15,7 +15,7 @@ mixture_backfit_sl3(
   folds_mixture = 5L,
   folds_confounders = 5L,
   exposure_groups = NULL,
-  max_iterations = 10L,
+  max_iterations = 5L,
   tolerance = 1e-05,
   adjust_other_exposures = TRUE,
   force_offset = TRUE,
