@@ -12,6 +12,7 @@
 #' @param ... tbd
 #'
 #' @importFrom stats as.formula as.formula binomial coef lm
+#' @importFrom stats gaussian cor sd
 #'
 #' @export
 mixture_backfit_glm =
@@ -174,15 +175,15 @@ predict.mixture_backfit_glm = function(object, data, ...) {
   # "Error in eval(object$call$offset, newdata) : object 'mixture_offset' not found"
   #if (object$family == "binomial") {
   #}
-  
+
   # We are currently using an offset for both binomial and gaussian outcomes.
   reg_obj$call$offset = NULL
 
   preds = try({ predict(reg_obj, newdata = data[, object$exposures]) })
-  
+
   if (class(preds) == "try-error") {
     browser()
   }
-  
+
   return(preds)
 }

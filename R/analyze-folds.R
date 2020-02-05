@@ -126,7 +126,7 @@ analyze_folds =
         next
       }
 
-      if (sd(mixture_train) == 0) {
+      if (stats::sd(mixture_train) == 0) {
         error_msg = "Mixture applied to training data has no variation."
         # Save this result for auditing purposes.
         group_status[[group_name]] = list(
@@ -164,7 +164,7 @@ analyze_folds =
       # Check if we have overlap of cutpoints.
       # TODO: catch this error and continue on, at least with the other exposure groups.
       if (length(unique(quantiles)) < length(quantiles)) {
-        print(hist(mixture_train))
+        print(graphics::hist(mixture_train))
         cat("Total quantiles:", length(quantiles), "Unique quantiles:", length(unique(quantiles)), "\n")
         cat("Quantiles:", quantiles, "\n")
         cat("Exposure group:", names(exposure_groups)[group_i], "\n")
