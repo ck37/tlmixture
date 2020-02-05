@@ -33,6 +33,9 @@ analyze_mixture(
 
 \item{weight_var}{tbd}
 
+\item{exposure_group}{exposure group to analyze, defaults to "all" (i.e. single
+aliases group of all exposures.}
+
 \item{round_digits}{tbd}
 
 \item{rescale_adjustment}{tbd}

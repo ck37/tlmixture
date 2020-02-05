@@ -271,10 +271,10 @@ combine_test_results =
     # 1-sided p-value
     # rd_pval_overall = 1 - pnorm(rd_overall / rd_se_overall)
     # 2-sided p-value
-    rd_pval_overall = 2 * pnorm(-abs(rd_overall / rd_se_overall))
+    rd_pval_overall = 2 * stats::pnorm(-abs(rd_overall / rd_se_overall))
 
     # Confidence interval
-    z_1.96 = qnorm(0.975)
+    z_1.96 = stats::qnorm(0.975)
     rd_ci_lower = rd_overall - z_1.96 * rd_se_overall
     rd_ci_upper = rd_overall + z_1.96 * rd_se_overall
 

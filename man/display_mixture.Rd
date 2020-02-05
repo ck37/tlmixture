@@ -13,9 +13,15 @@ display_mixture(
 )
 }
 \arguments{
-\item{analysis}{tbd}
+\item{analysis}{TLmixture analysis object.}
 
-\item{digits}{tbd}
+\item{digits}{Significant digits to round values to; default 3.}
+
+\item{caption}{Caption for the latex table}
+
+\item{label}{Label for the latex output}
+
+\item{booktabs}{Whether to use booktabs output, default True.}
 }
 \description{
 Display mixture

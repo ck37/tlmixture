@@ -37,6 +37,10 @@ mixture_backfit_sl3(
 
 \item{estimator_confounders}{sl3::Lrnr_sl with offset-supporting learners}
 
+\item{folds_mixture}{SL folds to use during mixture estimation; default 5. (Not yet implemented).}
+
+\item{folds_confounders}{SL folds to use during confounder estimation; default 5. (Not yet implemented).}
+
 \item{exposure_groups}{List of all exposure groups}
 
 \item{max_iterations}{tbd}
@@ -45,11 +49,15 @@ mixture_backfit_sl3(
 
 \item{adjust_other_exposures}{Whether or not to include other exposure groups as confounders to adjust for. Default TRUE.}
 
+\item{force_offset}{Whether to use offset style estimation for gaussian outcomes; default True.}
+
 \item{quantiles}{tbd}
 
 \item{family}{Not used for this mixture estimator.}
 
 \item{verbose}{tbd}
+
+\item{debug}{If True show very detailed output.}
 
 \item{...}{tbd}
 }

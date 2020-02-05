@@ -22,7 +22,7 @@ causal.null.test <- function(Y, A, W, g.hats, mu.hat, p=2, alpha = .05, n.sim = 
     Y <- Y[ord]
     W <- W[ord,]
     g.hats <- g.hats[ord]
-    a.ecdf <- ecdf(A)
+    a.ecdf <- stats::ecdf(A)
     a.weights <- sapply(a.vals, function(a0) mean(A == a0))
     A.a.val <- sapply(A, function(a0) which(a.vals == a0))
     u.vals <- a.ecdf(a.vals)
@@ -77,7 +77,7 @@ causal.null.test <- function(Y, A, W, g.hats, mu.hat, p=2, alpha = .05, n.sim = 
       Y.test <- Y.test[ord]
       W.test <- W.test[ord,]
       g.hats.test <- g.hats[[j]][ord]
-      a.ecdf <- ecdf(A.test)
+      a.ecdf <- stats::ecdf(A.test)
       a.weights <- sapply(a.vals, function(a0) mean(A.test == a0))
       A.a.val <- sapply(A.test, function(a0) which(a.vals == a0))
       u.vals <- a.ecdf(a.vals)
@@ -211,7 +211,7 @@ con.mixed.dens.SL <- function(A, W, n.bins, SL.library, verbose=FALSE, n.folds =
 
   # Do SL log-likelihood optimization
   cv_risk <- function(beta) -mean(log(cv.library.densities[,!errors.in.library] %*% beta))
-  capture.output(solnp_solution <- solnp(rep(1/n.include, n.include), cv_risk, eqfun=sum, eqB=1, ineqfun=function(beta) beta, ineqLB=rep(0,n.include), ineqUB=rep(1, n.include)))
+  utils::capture.output(solnp_solution <- solnp(rep(1/n.include, n.include), cv_risk, eqfun=sum, eqB=1, ineqfun=function(beta) beta, ineqLB=rep(0,n.include), ineqUB=rep(1, n.include)))
   coef <- rep(0, n.algs)
   coef[!errors.in.library] <- solnp_solution$pars
   if(verbose) {
@@ -222,7 +222,7 @@ con.mixed.dens.SL <- function(A, W, n.bins, SL.library, verbose=FALSE, n.folds =
   }
   SL.density <- c(library.densities[,!errors.in.library] %*% solnp_solution$pars)
 
-  return(list(n.bins = n.bins, fits = fits, cv.library.densities = cv.library.densities, library.densities = library.densities, SL.densities = SL.density, coef = coef, library.names = library.names, a.ecdf = ecdf(A)))
+  return(list(n.bins = n.bins, fits = fits, cv.library.densities = cv.library.densities, library.densities = library.densities, SL.densities = SL.density, coef = coef, library.names = library.names, a.ecdf = stats::ecdf(A)))
 
 
 }
@@ -231,7 +231,7 @@ con.mixed.dens.SL <- function(A, W, n.bins, SL.library, verbose=FALSE, n.folds =
 #' @import SuperLearner
 # @import sets
 con.mixed.dens.one.bin <- function(A, W, n.bins, SL.library, verbose=FALSE, valid.rows=NULL, n.folds=10) {
-  a.ecdf <- ecdf(A)
+  a.ecdf <- stats::ecdf(A)
   U <- a.ecdf(A)
   n <- nrow(W)
   W <- as.data.frame(W)
@@ -336,12 +336,12 @@ con.mixed.dens.one.bin <- function(A, W, n.bins, SL.library, verbose=FALSE, vali
   bin.probs <- matrix(NA, nrow=n, ncol=n.bins)
   for(bin in 1:n.bins) {
     if(verbose) cat("bin", bin, "... ")
-    capture.output(bin.fit <- try(SuperLearner(Y=as.numeric(disc.U==bin), X=W, family='binomial', SL.library = SL.library, method='method.NNloglik', cvControl = list(V=n.folds, validRows=valid.rows)), silent=TRUE))
+    utils::capture.output(bin.fit <- try(SuperLearner(Y=as.numeric(disc.U==bin), X=W, family='binomial', SL.library = SL.library, method='method.NNloglik', cvControl = list(V=n.folds, validRows=valid.rows)), silent=TRUE))
     if(class(bin.fit) == "try-error") {
-      capture.output(bin.fit <- try(SuperLearner(Y=as.numeric(disc.U==bin), X=W, family='binomial', SL.library = SL.library, method='method.NNLS', cvControl = list(V=n.folds, validRows=valid.rows)), silent=TRUE))
+      utils::capture.output(bin.fit <- try(SuperLearner(Y=as.numeric(disc.U==bin), X=W, family='binomial', SL.library = SL.library, method='method.NNLS', cvControl = list(V=n.folds, validRows=valid.rows)), silent=TRUE))
     }
     if(class(bin.fit) == "try-error") {
-      capture.output(bin.fit <- try(SuperLearner(Y=as.numeric(disc.U==bin), X=W, family='binomial', SL.library = SL.library, method='method.NNLS2', cvControl = list(V=n.folds, validRows=valid.rows)), silent=TRUE))
+      utils::capture.output(bin.fit <- try(SuperLearner(Y=as.numeric(disc.U==bin), X=W, family='binomial', SL.library = SL.library, method='method.NNLS2', cvControl = list(V=n.folds, validRows=valid.rows)), silent=TRUE))
     }
     if(class(bin.fit) != "try-error") {
       bin.fits[[paste0("bin", bin, ".SL")]] <- bin.fit

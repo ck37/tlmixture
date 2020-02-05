@@ -5,6 +5,8 @@
 #' @param exposures tbd
 #' @param estimator_mixture tbd
 #' @param estimator_confounders tbd
+#' @param folds_mixture SL folds.
+#' @param folds_confounders SL folds.
 #' @param exposure_groups List of all exposure groups
 #' @param max_iterations tbd
 #' @param tolerance tbd

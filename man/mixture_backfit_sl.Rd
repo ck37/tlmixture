@@ -32,6 +32,10 @@ mixture_backfit_sl(
 
 \item{estimator_confounders}{tbd}
 
+\item{folds_mixture}{SL folds.}
+
+\item{folds_confounders}{SL folds.}
+
 \item{exposure_groups}{List of all exposure groups}
 
 \item{max_iterations}{tbd}

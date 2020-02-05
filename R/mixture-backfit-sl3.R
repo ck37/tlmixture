@@ -5,13 +5,17 @@
 #' @param exposures tbd
 #' @param estimator_mixture sl3::Lrnr_sl with offset-supporting learners
 #' @param estimator_confounders sl3::Lrnr_sl with offset-supporting learners
+#' @param folds_mixture SL folds to use during mixture estimation; default 5. (Not yet implemented).
+#' @param folds_confounders SL folds to use during confounder estimation; default 5. (Not yet implemented).
 #' @param exposure_groups List of all exposure groups
 #' @param max_iterations tbd
 #' @param tolerance tbd
 #' @param adjust_other_exposures Whether or not to include other exposure groups as confounders to adjust for. Default TRUE.
+#' @param force_offset Whether to use offset style estimation for gaussian outcomes; default True.
 #' @param quantiles tbd
 #' @param family Not used for this mixture estimator.
 #' @param verbose tbd
+#' @param debug If True show very detailed output.
 #' @param ... tbd
 #'
 #' @importFrom stats as.formula as.formula binomial coef lm

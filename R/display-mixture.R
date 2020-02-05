@@ -1,7 +1,10 @@
 #' Display mixture
 #'
-#' @param analysis tbd
-#' @param digits tbd
+#' @param analysis TLmixture analysis object.
+#' @param digits Significant digits to round values to; default 3.
+#' @param caption Caption for the latex table
+#' @param label Label for the latex output
+#' @param booktabs Whether to use booktabs output, default True.
 #'
 #' @export
 display_mixture =

@@ -7,6 +7,8 @@
 #' @param vars_desc tbd
 #' @param name tbd
 #' @param weight_var tbd
+#' @param exposure_group exposure group to analyze, defaults to "all" (i.e. single
+#'    aliases group of all exposures.
 #' @param round_digits tbd
 #' @param rescale_adjustment tbd
 #' @param reg_vars tbd
