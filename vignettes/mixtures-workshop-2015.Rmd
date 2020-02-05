@@ -154,6 +154,7 @@ sl <- Lrnr_sl$new(learners = stack,
 
 estimator_sl3 = function(...) {
   tlmixture::mixture_backfit_sl3(...,
+                                 debug = TRUE,
                                  estimator_mixture = sl$clone(),
                                  estimator_confounders = sl$clone())
 }
@@ -167,7 +168,6 @@ set.seed(1, "L'Ecuyer-CMRG")
 result =
   tlmixture(df, outcome = task$outcome,
             exposures = task$exposures,
-            quantiles_exposures = quantiles_exposures,
             #quantiles_mixtures = quantiles_mixtures,
             #quantiles_mixtures = 3,
             quantiles_mixtures = 4,
@@ -175,12 +175,11 @@ result =
             #estimator_outcome = estimators,
             #estimator_outcome = c("SL.mean", "SL.lm"),
             estimator_outcome = c("SL.mean", "lm2", "ranger_fast"),
-            cluster_exposures = cluster_exposures,
             #mixture_fn = tlmixture::mixture_backfit_glm,
             #mixture_fn = mixture_backfit_glm,
             #mixture_fn = tlmixture::mixture_backfit_lm,
-            mixture_fn = mixture_backfit_sl3,
-            #mixture_fn = estimator_sl3,
+            #mixture_fn = mixture_backfit_sl3,
+            mixture_fn = estimator_sl3,
             #folds_cvtmle = folds_cvtmle,
             #folds_cvtmle = 3,
             folds_cvtmle = 5,
@@ -188,9 +187,11 @@ result =
             #folds_cvtmle = 20,
             verbose = TRUE)
 
+result
+
 result$combined$results
 result$combined$groups_df
-qplot(result$groups$mixture_df$all)
+qplot(result$groups$mixture_df$all) + theme_minimal()
 ```
 
 ### Test backfit lm
