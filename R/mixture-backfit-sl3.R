@@ -50,6 +50,11 @@ mixture_backfit_sl3 =
     family = "binomial"
     # For binomial we want the default offset to be a 50% probability,
     # so that it becomes a 0 when tranformed to the linear logit scale.
+  }
+
+  # This is a separate if statement because we want family to be standardized to
+  # either "binomial" or "continuous" at this point.
+  if (family == "binomial") {
     offset_null = 0.5
   } else {
     offset_null = 0
@@ -125,7 +130,12 @@ mixture_backfit_sl3 =
     }
 
     # Calculate correction
-    correction = mean(f_a)
+    if (family == "binomial") {
+      # If binomial calculate on the logit scale to ensure that we remain in bounds.
+      correction = mean(qlogis(f_a))
+    } else {
+      correction = mean(f_a)
+    }
 
     if (debug) {
       cat("Correction:", correction, "\n")
@@ -134,12 +144,22 @@ mixture_backfit_sl3 =
     # Check if our predicted mixture is constant, meaning that SL.mean has 100% weight.
     if (sd(f_a) == 0) {
       cat("Error: mixture prediction has no variation.\n")
-      browser()
+      #browser()
     }
 
     # Residualize
     # y_star = data[[outcome]] - (f_a - correction)
-    data$offset_confounders = f_a - correction
+    if (family == "binomial") {
+      # Correct predictions on the logit scale, then convert back to probability scale.
+      data$offset_confounders = plogis(qlogis(f_a) - correction)
+      # TODO: confirm that offset is within (0, 1)
+      if (debug) {
+        cat("Summary of confounder offsets:\n")
+        print(summary(data$offset_confounders))
+      }
+    } else {
+      data$offset_confounders = f_a - correction
+    }
     #if (family == "binomial") {
     #  # sl3 expects offset to be on the probability scale rather than logit scale.
     #  data$offset_confounders = qlogis(data$offset_confounders)
@@ -165,7 +185,7 @@ mixture_backfit_sl3 =
                            outcome = "_outcome_yc",
                            outcome_type = family)
     }
-      
+
     fit_confounders = estimator_confounders$train(task_confounders)
 
     if (debug) {
@@ -283,10 +303,10 @@ mixture_backfit_sl3 =
 #' @param data tbd
 #' @param type "mixture" (default) or "confounders"
 #' @param ... tbd
-#' 
+#'
 #' @export
 predict.mixture_backfit_sl3 = function(object, data, type = "mixture", ...) {
-  
+
   if (object$family == "binomial") {
     # This becomes a 0 when transformed to the logit scale.
     offset_null = 0.5
@@ -294,28 +314,33 @@ predict.mixture_backfit_sl3 = function(object, data, type = "mixture", ...) {
     offset_null = 0
   }
 
+  # We need to create a blank outcome to avoid an sl3 error.
+  data$`_outcome` = 0
+
   if (type == "mixture") {
     if (object$family == "binomial" || object$force_offset) {
       # We need to create a blank offset to avoid an sl3 error.
       #data$offset_mixture = 0
       data$offset_mixture = offset_null
-    
+
       # Setup mixture estimation task
       task_mixture = sl3::make_sl3_Task(data = data,
                                         covariates = object$exposures,
                                         offset = "offset_mixture",
+                                        outcome = "_outcome",
                                         # Continuous or binomial
                                         outcome_type = object$family)
     } else {
       # Setup mixture estimation task
       task_mixture = sl3::make_sl3_Task(data = data,
                                         covariates = object$exposures,
+                                        outcome = "_outcome",
                                         # Continuous or binomial
                                         outcome_type = object$family)
     }
-  
+
     preds = object$reg_mixture$predict(task_mixture)
-  
+
     if (object$family == "binomial" || object$force_offset) {
       # Clear this variable in case we're modifying a data.table by reference.
       data$offset_mixture = NULL
@@ -326,11 +351,12 @@ predict.mixture_backfit_sl3 = function(object, data, type = "mixture", ...) {
     if (object$family == "binomial" || object$force_offset) {
       #data$offset_confounders = 0
       data$offset_confounders = offset_null
-    
+
       # Setup confounder estimation task
       task_confounders =
         sl3::make_sl3_Task(data = data,
                            covariates = object$confounders,
+                           outcome = "_outcome",
                            offset = "offset_confounders",
                            outcome_type = object$family)
     } else {
@@ -338,16 +364,20 @@ predict.mixture_backfit_sl3 = function(object, data, type = "mixture", ...) {
       task_confounders =
         sl3::make_sl3_Task(data = data,
                            covariates = object$confounders,
+                           outcome = "_outcome",
                            outcome_type = object$family)
     }
-  
+
     preds = object$reg_adjust$predict(task_confounders)
-  
+
     if (object$family == "binomial" || object$force_offset) {
       # Clear this variable in case we're modifying a data.table by reference.
       data$offset_confounders = NULL
     }
   }
+
+  # Clean up blank outcome
+  data$`_outcome` = NULL
 
   return(preds)
 }

@@ -13,6 +13,10 @@ combine_test_results =
            quantiles_mixtures,
            verbose = FALSE) {
 
+  if (verbose) {
+    cat("\nCombining test results.\n")
+  }
+
 
   # Hopefully we get the same number of groups for each training fold.
   # But if it's data-adaptive then we could get different results across folds.
@@ -33,6 +37,15 @@ combine_test_results =
   # Loop over exposure groups.
   for (group_i in seq(length(exposure_groups))) {
 
+    group_name = names(exposure_groups)[group_i]
+    if (verbose) {
+      cat("Combining group", group_name, "\n")
+    }
+
+    # Attempt to recover from any errors that occur during this analysis.
+    # If an exposure group had a zero-variation mixture function then all
+    # of this analysis will fail.
+    tryCatch({
     ###############
     #  Create a dataframe with a row for each fold and each column in the weight.
 
@@ -76,8 +89,13 @@ combine_test_results =
         do.call(rbind, lapply(seq(length(result)), function(fold_i) {
           fold = result[[fold_i]]
 
+          # Check if estimation failed for this group in this fold.
+          if (!group_name %in% names(fold$test_results)) {
+            return(NULL)
+          }
+
           # Return the weights for this group, across all training folds.
-          df = fold$test_results[[group_i]]
+          df = fold$test_results[[group_name]]
 
           # Restrict to the current quantile that we're analyzing
           df = df[df$quantile == quantile_i, ]
@@ -288,11 +306,20 @@ combine_test_results =
       rd_se = rd_se_overall
     )
 
+    if (verbose) {
+      cat("Result for group", group_i, "\n")
+      print(group_result)
+    }
+
     # Append to the dataframe.
     groups_df = rbind.data.frame(groups_df, group_result,
                                  # We need strings to not be factors because we
                                  # are adding a unique group name at each iteration.
                                  stringsAsFactors = FALSE)
+    }, error = function(error) {
+      cat("Analysis failed for group", group_i, "\n")
+      print(error)
+    })
 
   } # Looping over exposure groups
 
