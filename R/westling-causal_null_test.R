@@ -10,8 +10,7 @@
 # n.sim: number of simulations to use for limit Gaussian process estimation
 # return.Omega: whether to return the estimated primitive function and confidence interval/band
 # cv.folds: if k-fold cross-fitting was used for g.hat and mu.hat, then cv.folds should be a length-k list of indices in each fold
-#' @import mvtnorm
-#' @importFrom sets interval_contains_element interval interval_complement
+# @importFrom sets interval_contains_element interval interval_complement
 causal.null.test <- function(Y, A, W, g.hats, mu.hat, p=2, alpha = .05, n.sim = 1e4, return.Omega = FALSE, cv.folds = NULL) {
 #  library(sets)
 #  library(mvtnorm)

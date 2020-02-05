@@ -151,7 +151,7 @@ mixture_backfit_sl3 =
     }
 
     # Check if our predicted mixture is constant, meaning that SL.mean has 100% weight.
-    if (sd(f_a) == 0) {
+    if (stats::sd(f_a) == 0) {
       cat("Error: mixture prediction has no variation.\n")
       #browser()
     }
@@ -229,7 +229,7 @@ mixture_backfit_sl3 =
     data$offset_mixture = g_w
 
     if (debug) {
-      cat("Correlation of g_w and f_a:", cor(f_a, g_w), "\n")
+      cat("Correlation of g_w and f_a:", suppressWarnings(stats::cor(f_a, g_w)), "\n")
     }
 
     # Check for convergence and stop early
