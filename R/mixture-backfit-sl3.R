@@ -62,6 +62,11 @@ mixture_backfit_sl3 =
 
   confounders = names(data)[!names(data) %in% c(outcome, exposures)]
 
+  # Remove other exposure variables from the confounder list.
+  if (!adjust_other_exposures) {
+    confounders = setdiff(confounders, unlist(exposure_groups))
+  }
+
   if (debug) {
     cat("Family:", family, "\n")
     cat("Exposures:", exposures, "\n")
