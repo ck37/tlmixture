@@ -47,6 +47,10 @@ analyze_folds =
     } else if (is.list(exposures)) {
       # Exposures is already a list with each element being a group.
       exposure_groups = exposures
+      if (is.null(names(exposure_groups))) {
+        # Assign a number as the group name.
+        names(exposure_groups) = paste0("group", seq(length(exposure_groups)))
+      }
     } else {
 
       # Single group with all of the exposures.
