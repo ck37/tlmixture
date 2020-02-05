@@ -76,6 +76,14 @@ quantiles_mixtures = 3L
 # Two exposure groups.
 exposure_groups = list(c("e1", "e2"), c("e2", "e3"))
 
+mixture_sl3_faster = function(...) {
+    tlmixture::mixture_backfit_sl3(...,
+                                 #debug = TRUE,
+                                 max_iterations = 3L)#,
+                                 #estimator_mixture = sl$clone(),
+                                 #estimator_confounders = sl$clone())
+}
+
 result =
   tlmixture(data, outcome = "y",
             exposures = exposure_groups,
@@ -84,66 +92,71 @@ result =
             #quantiles_mixtures = quantiles_mixtures,
             #quantiles_mixtures = 5,
             #quantiles_mixtures = 4,
-            quantiles_mixtures = 3,
+            quantiles_mixtures = 2,
             estimator_outcome = estimators,
             cluster_exposures = cluster_exposures,
             #mixture_fn = tlmixture::mixture_sl,
-            mixture_fn = tlmixture::mixture_pls,
+            mixture_fn = mixture_sl3_faster,
             #folds_cvtmle = folds_cvtmle,
             #folds_cvtmle = 3,
             #folds_cvtmle = 20,
-            folds_cvtmle = 5,
+            folds_cvtmle = 2,
             verbose = FALSE)
 
+result
 names(result)
 #result
 
+# Group 1 is ranked as more important than group 2.
+result$groups$groups_df
+
 result$combined$results
 
-
-# Weight results for the first (and only) exposure group.
-result$combined$weight_dfs[[1]]
-(avg_wgts_1 = colMeans(result$combined$weight_dfs[[1]]))
-(avg_wgts_2 = colMeans(result$combined$weight_dfs[[2]]))
-
-library(ggplot2)
-
-qplot(data$e1)
-qplot(data$e2)
-
-# Calculate estimated mixture from the average weights.
-mixture_1 = as.vector(as.matrix(data[, exposure_groups[[1]]]) %*% matrix(avg_wgts_1, ncol = 1L))
-mixture_2 = as.vector(as.matrix(data[, exposure_groups[[2]]]) %*% matrix(avg_wgts_2, ncol = 1L))
-
-# Mixture distribution.
-# TODO: different types of histogram-like plots.
-qplot(mixture_1)
-qplot(mixture_2)
-qplot(mixture_2, data$e2)
-
-# Mixture 2 is just exposure 2.
-cor(mixture_2, data$e2)
-cor.test(mixture_2, data$e2)
-
-# Plot the mixture versus risk - this looks pretty good!
-ggplot(data = data.frame(mixture_1, y = data$y),
-       aes(x = mixture_1, y = y)) + geom_point() +
-  geom_smooth(se = FALSE, size = 0.2) +
-  geom_smooth(method = "lm", se = FALSE, color = "red", size = 0.1) +
-  theme_minimal() +
-  labs(x = "Estimated mixture 1")
-
-# Plot the mixture versus risk - this looks pretty good!
-ggplot(data = data.frame(mixture_2, y = data$y),
-       aes(x = mixture_2, y = y)) + geom_point() +
-  geom_smooth(se = FALSE, size = 0.2) +
-  geom_smooth(method = "lm", se = FALSE, color = "red", size = 0.1) +
-  theme_minimal() +
-  labs(x = "Estimated mixture 2")
-
-# TODO: add in quantile lines or something.
-
-# TODO: Plot each mixture over the CV-TMLE folds.
+if (FALSE) {
+  # All this is outdated and for the PLS-based mixture estimator.
+  result$combined$weight_dfs[[1]]
+  (avg_wgts_1 = colMeans(result$combined$weight_dfs[[1]]))
+  (avg_wgts_2 = colMeans(result$combined$weight_dfs[[2]]))
+  
+  library(ggplot2)
+  
+  qplot(data$e1)
+  qplot(data$e2)
+  
+  # Calculate estimated mixture from the average weights.
+  mixture_1 = as.vector(as.matrix(data[, exposure_groups[[1]]]) %*% matrix(avg_wgts_1, ncol = 1L))
+  mixture_2 = as.vector(as.matrix(data[, exposure_groups[[2]]]) %*% matrix(avg_wgts_2, ncol = 1L))
+  
+  # Mixture distribution.
+  # TODO: different types of histogram-like plots.
+  qplot(mixture_1)
+  qplot(mixture_2)
+  qplot(mixture_2, data$e2)
+  
+  # Mixture 2 is just exposure 2.
+  cor(mixture_2, data$e2)
+  cor.test(mixture_2, data$e2)
+  
+  # Plot the mixture versus risk - this looks pretty good!
+  ggplot(data = data.frame(mixture_1, y = data$y),
+         aes(x = mixture_1, y = y)) + geom_point() +
+    geom_smooth(se = FALSE, size = 0.2) +
+    geom_smooth(method = "lm", se = FALSE, color = "red", size = 0.1) +
+    theme_minimal() +
+    labs(x = "Estimated mixture 1")
+  
+  # Plot the mixture versus risk - this looks pretty good!
+  ggplot(data = data.frame(mixture_2, y = data$y),
+         aes(x = mixture_2, y = y)) + geom_point() +
+    geom_smooth(se = FALSE, size = 0.2) +
+    geom_smooth(method = "lm", se = FALSE, color = "red", size = 0.1) +
+    theme_minimal() +
+    labs(x = "Estimated mixture 2")
+  
+  # TODO: add in quantile lines or something.
+  
+  # TODO: Plot each mixture over the CV-TMLE folds.
+}
 
 result$combined$results
 plot_df = result$combined$results
