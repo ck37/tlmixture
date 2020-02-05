@@ -116,12 +116,14 @@ result =
             estimator_outcome = estimators,
             cluster_exposures = cluster_exposures,
             #mixture_fn = tlmixture::mixture_sl,
-            mixture_fn = tlmixture::mixture_pls,
+            #mixture_fn = tlmixture::mixture_pls,
             #folds_cvtmle = folds_cvtmle,
             #folds_cvtmle = 3,
             #folds_cvtmle = 20,
-            folds_cvtmle = 5,
+            folds_cvtmle = 2,
+            refit_mixtures = TRUE,
             verbose = FALSE)
+
 result
 # Weight results for the first (and only) exposure group.
 result$combined$weight_dfs[[1]]

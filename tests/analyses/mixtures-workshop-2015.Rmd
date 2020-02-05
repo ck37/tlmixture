@@ -144,6 +144,9 @@ lrnr_mean <- make_learner(Lrnr_mean)
 lrnr_glmnet <- make_learner(Lrnr_glmnet)
 lrnr_xgb <- make_learner(Lrnr_xgboost, nrounds = 100, nthread = get_cores(), eta = 0.1)
 lrnr_xgb2 <- make_learner(Lrnr_xgboost, nrounds = 40, nthread = get_cores(), eta = 0.3, max_depth = 3L)
+lrnr_hal_d3 = make_learner(Lrnr_hal9001)
+lrnr_hal_d2 = make_learner(Lrnr_hal9001, max_degree = 2)
+lrnr_hal_d1 = make_learner(Lrnr_hal9001, max_degree = 1)
 
 # stack <- make_learner(Stack, lrnr_glm, lrnr_mean)
 sl3_screen_cor <- make_learner(Lrnr_screener_corP)
@@ -153,6 +156,8 @@ stack <- make_learner(Stack,
                       lrnr_glm,
                       sl3_cor_glm,
                       lrnr_mean,
+                      lrnr_hal_d2,
+                      lrnr_hal_d1,
                       #lrnr_glm_fast,
                       lrnr_xgb,
                       lrnr_xgb2)#, lrnr_glmnet)
@@ -177,7 +182,6 @@ set.seed(1, "L'Ecuyer-CMRG")
 result =
   tlmixture(df, outcome = task$outcome,
             exposures = task$exposures,
-            quantiles_exposures = quantiles_exposures,
             #quantiles_mixtures = quantiles_mixtures,
             quantiles_mixtures = 4,
             #quantiles_mixtures = 2,
@@ -185,7 +189,6 @@ result =
             #estimator_outcome = estimators,
             #estimator_outcome = c("SL.mean", "SL.lm"),
             estimator_outcome = c("SL.mean", "lm2", "ranger_fast"),
-            cluster_exposures = cluster_exposures,
             #mixture_fn = tlmixture::mixture_backfit_glm,
             #mixture_fn = mixture_backfit_glm,
             #mixture_fn = tlmixture::mixture_backfit_lm,
@@ -198,10 +201,11 @@ result =
             #folds_cvtmle = 10,
             #folds_cvtmle = 20,
             verbose = TRUE)
+
 result
-result$combined$results
+
 result$combined$groups_df
-qplot(result$groups$mixture_df$all)
+qplot(result$groups$mixture_df$all) + theme_minimal()
 ```
 
 ### Test backfit lm
@@ -280,10 +284,10 @@ if (FALSE) {
 
 ```{r data1_results}
 summary(result$outcome_rescaled)
-data[[result$outcome]] = result$outcome_rescaled
+df[[result$outcome]] = result$outcome_rescaled
 
 # Analyze mixture distribution.
-mix_result = analyze_mixture(data, result,
+mix_result = analyze_mixture(df, result,
                              name = "Dataset 1",
                              reg_vars = task$covariates,
                              vars_desc = task$covariates)
@@ -317,7 +321,7 @@ task$exposures
 
 for (exposure_i in task$exposures) {
 
-  gg_df = cbind.data.frame(data[, exposure_i, drop = FALSE],
+  gg_df = cbind.data.frame(df[, exposure_i, drop = FALSE],
                            result$groups$mixture_df)
   g = ggplot(data = gg_df, aes(x = get(exposure_i), y = all)) +
     geom_smooth() +
@@ -328,8 +332,12 @@ for (exposure_i in task$exposures) {
 }
 
 reg = lm(result$groups$mixture_df$all ~ .,
-         data = data[, c(task$exposures, task$covariates)])
+         data = df[, c(task$exposures, task$covariates)])
 summary(reg)
+
+reg_v2 = lm(result$groups$mixture_df$all ~ .,
+         data = df[, task$exposures])
+summary(reg_v2)
 
 
 ```
@@ -413,12 +421,36 @@ str(df2)
 # Create a noise z2 - temporary.
 # TODO: fix tlmixture to work with 1 or 0 adjustment variables.
 #df$z2 = rnorm(nrow(df))
+
+
+lrnr_hal_d1_lassi = make_learner(Lrnr_hal9001, max_degree = 1, fit_type = "lassi")
+
+
+stack2 <- make_learner(Stack,
+                      lrnr_glm,
+                      sl3_cor_glm,
+                      lrnr_mean,
+                      lrnr_hal_d1_lassi,
+                      #lrnr_glm_fast,
+                      lrnr_xgb,
+                      lrnr_xgb2)#, lrnr_glmnet)
+sl2 <- Lrnr_sl$new(learners = stack2,
+                   metalearner = make_learner(Lrnr_nnls, convex = TRUE))
+
+estimator_sl3_v2 = function(...) {
+  tlmixture::mixture_backfit_sl3(...,
+                                 debug = TRUE,
+                                 max_iterations = 3L,
+                                 #max_iterations = 10L,
+                                 estimator_mixture = sl2$clone(),
+                                 estimator_confounders = sl2$clone())
+}
 ```
 
 ### Run TLMixture
 
 ```{r data2_tlmixture}
-
+set.seed(1, "L'Ecuyer-CMRG")
 result2 = tlmixture(df2, outcome = task2$outcome,
                    exposures = exposures,
                    quantiles_exposures = quantiles_exposures,
@@ -428,7 +460,7 @@ result2 = tlmixture(df2, outcome = task2$outcome,
                    estimator_outcome = estimators,
                    cluster_exposures = cluster_exposures,
                    #mixture_fn = mixture_backfit_sl3,
-                   mixture_fn = estimator_sl3,
+                   mixture_fn = estimator_sl3_v2,
                    #mixture_fn = sl_mix_2,
                    #folds_cvtmle = folds_cvtmle,
                    #folds_cvtmle = 3,
@@ -449,9 +481,9 @@ result2
 ```{r data2_test_mixture_backfit_sl3, eval = FALSE}
 res2 = mixture_backfit_sl3(df2,
                          task2$outcome, task2$exposures,
-                         estimator_mixture = sl$clone(),
-                         estimator_confounders = sl$clone(),
-                         max_iterations = 10L,
+                         estimator_mixture = sl2$clone(),
+                         estimator_confounders = sl2$clone(),
+                         max_iterations = 3L,
                          debug = TRUE,
                          verbose = TRUE)
 

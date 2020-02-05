@@ -66,7 +66,7 @@ mixture_backfit_glm =
     f_a = reg_mixture$fitted.values
 
     if (family == "binomial") {
-      # Convert to log-odds scale.
+      # Convert to linear log-odds scale.
       f_a = log(f_a / (1 - f_a))
     }
 
@@ -130,7 +130,7 @@ mixture_backfit_glm =
       if (max(change_f_a, change_g_w) < tolerance) {
 
         # Truncate coefficients df so that we don't have a bunch of empty rows.
-        #coefs_mixture = coefs_mixture[1:iteration, ]
+        coefs_mixture = coefs_mixture[1:iteration, ]
 
         break
       }
@@ -172,10 +172,17 @@ predict.mixture_backfit_glm = function(object, data, ...) {
 
   # We need to clear the offset to avoid an error unfortunately.
   # "Error in eval(object$call$offset, newdata) : object 'mixture_offset' not found"
-  if (object$family == "binomial") {
-    reg_obj$call$offset = NULL
-  }
+  #if (object$family == "binomial") {
+  #}
+  
+  # We are currently using an offset for both binomial and gaussian outcomes.
+  reg_obj$call$offset = NULL
 
-  preds = predict(reg_obj, newdata = data[, object$exposures])
+  preds = try({ predict(reg_obj, newdata = data[, object$exposures]) })
+  
+  if (class(preds) == "try-error") {
+    browser()
+  }
+  
   return(preds)
 }
