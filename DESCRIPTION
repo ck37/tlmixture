@@ -46,4 +46,5 @@ Depends:
     SuperLearner
 Remotes: 
     github::ck37/ck37r,
+    github::tlverse/hal9001,
     github::tlverse/sl3
