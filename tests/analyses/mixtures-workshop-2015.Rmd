@@ -155,7 +155,7 @@ sl3_cor_glm <- make_learner(Pipeline, sl3_screen_cor, lrnr_glm)
 stack <- make_learner(Stack,
                       lrnr_glm,
                       sl3_cor_glm,
-                      lrnr_mean,
+                      #lrnr_mean,
                       lrnr_hal_d2,
                       lrnr_hal_d1,
                       #lrnr_glm_fast,
@@ -165,12 +165,30 @@ sl <- Lrnr_sl$new(learners = stack,
                   metalearner = make_learner(Lrnr_nnls, convex = TRUE))
 
 estimator_sl3 = function(...) {
-  tlmixture::mixture_backfit_sl3(...,
+  #tlmixture::mixture_backfit_sl3(...,
+  mixture_score_sl3(...,
                                  debug = TRUE,
-                                 max_iterations = 3L,
+                                 #max_iterations = 3L,
                                  #max_iterations = 10L,
                                  estimator_mixture = sl$clone(),
                                  estimator_confounders = sl$clone())
+}
+```
+
+### Orthogonalize exposures
+
+```{r ortho_exp}
+(covariates = setdiff(names(df), c(task$exposures, task$outcome)))
+
+# Orthogonalize exposures.
+df_ortho = df
+
+# Orthogonalize exposures per manuscript algorithm.
+for (exposure in task$exposures) {
+  # TODO: use SuperLearner here.
+  reg = glm(as.formula(paste0(exposure, " ~ .")), data = df_ortho[, c(covariates, exposure)])
+  # A' = A - E[A | W]
+  df_ortho[[exposure]] = df_ortho[[exposure]] - reg$fitted.values
 }
 ```
 
@@ -180,7 +198,9 @@ estimator_sl3 = function(...) {
 
 set.seed(1, "L'Ecuyer-CMRG")
 result =
-  tlmixture(df, outcome = task$outcome,
+  tlmixture(#df,
+            df_ortho,
+    outcome = task$outcome,
             exposures = task$exposures,
             #quantiles_mixtures = quantiles_mixtures,
             quantiles_mixtures = 4,
@@ -342,7 +362,6 @@ summary(reg_v2)
 
 ```
 
-
 ## Simulated Dataset 2
 
 ### Import data
@@ -429,8 +448,9 @@ lrnr_hal_d1_lassi = make_learner(Lrnr_hal9001, max_degree = 1, fit_type = "lassi
 stack2 <- make_learner(Stack,
                       lrnr_glm,
                       sl3_cor_glm,
-                      lrnr_mean,
+                      #lrnr_mean,
                       lrnr_hal_d1_lassi,
+                      lrnr_hal_d2,
                       #lrnr_glm_fast,
                       lrnr_xgb,
                       lrnr_xgb2)#, lrnr_glmnet)
@@ -438,7 +458,8 @@ sl2 <- Lrnr_sl$new(learners = stack2,
                    metalearner = make_learner(Lrnr_nnls, convex = TRUE))
 
 estimator_sl3_v2 = function(...) {
-  tlmixture::mixture_backfit_sl3(...,
+  #tlmixture::mixture_backfit_sl3(...,
+  mixture_score_sl3(...,
                                  debug = TRUE,
                                  max_iterations = 3L,
                                  #max_iterations = 10L,
@@ -447,11 +468,30 @@ estimator_sl3_v2 = function(...) {
 }
 ```
 
+### Orthogonalize exposures
+
+```{r ortho_exp2}
+(covariates = setdiff(names(df2), c(task2$exposures, task2$outcome)))
+
+# Orthogonalize exposures.
+df2_ortho = df2
+
+# Orthogonalize exposures per manuscript algorithm.
+for (exposure in task2$exposures) {
+  # TODO: use SuperLearner here.
+  reg = glm(as.formula(paste0(exposure, " ~ .")), data = df2_ortho[, c(covariates, exposure)])
+  # A' = A - E[A | W]
+  df2_ortho[[exposure]] = df2_ortho[[exposure]] - reg$fitted.values
+}
+```
+
 ### Run TLMixture
 
 ```{r data2_tlmixture}
 set.seed(1, "L'Ecuyer-CMRG")
-result2 = tlmixture(df2, outcome = task2$outcome,
+result2 = tlmixture(#df2,
+                   df2_ortho,
+                   outcome = task2$outcome,
                    exposures = exposures,
                    quantiles_exposures = quantiles_exposures,
                    #quantiles_mixtures = quantiles_mixtures,
