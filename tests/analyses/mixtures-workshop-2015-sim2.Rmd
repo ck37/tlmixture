@@ -1,0 +1,257 @@
+---
+title: "NIEHS Mixtures workshop 2015 simulation 2"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{NIEHS Mixtures Workshop 2015}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[utf8]{inputenc}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+setwd(here::here("tests/analyses"))
+
+# Enable to generate high-res plots for the paper
+#knitr::opts_chunk$set(dpi = 300, fig.width = 4, fig.height = 4)
+
+library(magrittr)
+```
+
+See https://www.niehs.nih.gov/news/events/pastmtg/2015/statistical/index.cfm
+
+## Simulated Dataset 2
+
+### Import data
+
+```{r data2_import}
+data2 = rio::import("../../inst/extdata/niehs-2015-dataset2.xls")
+str(data2)
+
+names(data2) = tolower(names(data2))
+
+task2 = list(
+  id = "obs",
+  exposures = paste0("x", 1:14),
+  outcome = "y")
+
+task2$covariates = setdiff(names(data2), c(task2$id, task2$exposures, task2$outcome))
+task2
+```
+
+### Exploratory data analysis
+
+TODO: determine if we need to log-transform the data.
+
+```{r data2_eda}
+library(ggplot2)
+
+for (exposure in task2$exposures) {
+  print(qplot(data2[[exposure]]) + ggtitle(paste("Exposure:", exposure)) + theme_minimal())
+}
+
+
+# Skip log-transforming the data.
+if (FALSE) {
+for (exposure in task2$exposures) {
+  data2[[exposure]] = log(data[[exposure]])
+}
+
+print(summary(data2))
+
+for (exposure in task2$exposures) {
+  print(qplot(data2[[exposure]]) + ggtitle(paste("Exposure:", exposure)) + theme_minimal())
+}
+
+}
+
+```
+
+### Prep to run
+
+```{r data2_model}
+
+library(tlmixture)
+library(tmle)
+#folds_cvtmle = 2L
+folds_cvtmle = 5L
+#estimators = c("SL.mean", "SL.glmnet", "SL.ranger", "tmle.SL.dbarts2")
+#estimators = c("SL.mean", "SL.glmnet", "SL.ranger")
+estimators = c("SL.mean", "lm2", "ranger_fast")
+cluster_exposures = FALSE
+verbose = TRUE
+quantiles_exposures = 4L
+quantiles_mixtures = 3L
+
+names(data2)
+(exposures = task2$exposures)
+class(data2)
+
+task2$exposures
+
+# Simpler version.
+#(exposures = paste0("x", 1:3))
+
+df2 = data2[, !names(data2) %in% task2$id]
+str(df2)
+
+# Create a noise z2 - temporary.
+# TODO: fix tlmixture to work with 1 or 0 adjustment variables.
+#df$z2 = rnorm(nrow(df))
+
+
+lrnr_hal_d1_lassi = make_learner(Lrnr_hal9001, max_degree = 1, fit_type = "lassi")
+
+
+stack2 <- make_learner(Stack,
+                      lrnr_glm,
+                      sl3_cor_glm,
+                      #lrnr_mean,
+                      lrnr_hal_d1_lassi,
+                      lrnr_hal_d2,
+                      #lrnr_glm_fast,
+                      lrnr_xgb,
+                      lrnr_xgb2)#, lrnr_glmnet)
+sl2 <- Lrnr_sl$new(learners = stack2,
+                   metalearner = make_learner(Lrnr_nnls, convex = TRUE))
+
+estimator_sl3_v2 = function(...) {
+  #tlmixture::mixture_backfit_sl3(...,
+  mixture_score_sl3(...,
+                                 debug = TRUE,
+                                 max_iterations = 3L,
+                                 #max_iterations = 10L,
+                                 estimator_mixture = sl2$clone(),
+                                 estimator_confounders = sl2$clone())
+}
+```
+
+### Orthogonalize exposures
+
+```{r ortho_exp2}
+(covariates = setdiff(names(df2), c(task2$exposures, task2$outcome)))
+
+# Orthogonalize exposures.
+df2_ortho = df2
+
+# Orthogonalize exposures per manuscript algorithm.
+for (exposure in task2$exposures) {
+  # TODO: use SuperLearner here.
+  reg = glm(as.formula(paste0(exposure, " ~ .")), data = df2_ortho[, c(covariates, exposure)])
+  # A' = A - E[A | W]
+  df2_ortho[[exposure]] = df2_ortho[[exposure]] - reg$fitted.values
+}
+```
+
+### Run TLMixture
+
+```{r data2_tlmixture}
+set.seed(1, "L'Ecuyer-CMRG")
+result2 = tlmixture(#df2,
+                   df2_ortho,
+                   outcome = task2$outcome,
+                   exposures = exposures,
+                   quantiles_exposures = quantiles_exposures,
+                   #quantiles_mixtures = quantiles_mixtures,
+                   quantiles_mixtures = 4,
+                   #quantiles_mixtures = 5,
+                   estimator_outcome = estimators,
+                   cluster_exposures = cluster_exposures,
+                   #mixture_fn = mixture_backfit_sl3,
+                   mixture_fn = estimator_sl3_v2,
+                   #mixture_fn = sl_mix_2,
+                   #folds_cvtmle = folds_cvtmle,
+                   #folds_cvtmle = 2L,
+                   #folds_cvtmle = 3,
+                   #folds_cvtmle = 4,
+                   folds_cvtmle = 5,
+                   # folds_cvtmle = 8,
+                   #folds_cvtmle = 10,
+                   #folds_cvtmle = 20,
+                   verbose = TRUE)
+
+save(result2, file = "data/niehs-sim2-result.RData")
+
+# TODO: compile mixture predictions from test folds so that we can analyze post-hoc.
+# result$folds[[1]]$test_results
+result2
+```
+
+### Run mixture_sl3 on full data
+
+```{r data2_test_mixture_backfit_sl3, eval = FALSE}
+res2 = mixture_backfit_sl3(df2,
+                         task2$outcome, task2$exposures,
+                         estimator_mixture = sl2$clone(),
+                         estimator_confounders = sl2$clone(),
+                         max_iterations = 3L,
+                         debug = TRUE,
+                         verbose = TRUE)
+
+# Review sl3 learner for mixture
+res2$reg_mixture
+# Review sl3 learner for confounder adjustment
+res2$reg_adjust
+
+# Check prediction.
+preds_d2 = predict(res2, df2[, res2$exposures])
+qplot(preds_d2) + theme_minimal()
+
+# Try to predict the confounder regression.
+preds2_d2 = predict(res2, df2, type = "confounder")
+qplot(preds2_d2) + theme_minimal()
+
+# Examine predictors of mixture
+# Making one error: X2 should be significant and positive
+reg_d2 = glm(preds_d2 ~ ., data = data2[, res2$exposures])
+summary(reg_d2)
+
+# Examine predictors of confounding adjustment
+reg2_d2 = glm(preds2_d2 ~ ., data = df2[, res2$confounders])
+# NOTE: z2 is a noise variable, so we shouldn't find it to be significant.
+summary(reg2_d2)
+
+# Try including all data, but exclude outcome. 
+reg3_d2 = glm(preds2_d2 ~ ., data = df2[, !names(df2) %in% c("Y")])
+# Looks like the direction on exposures is generally swapped.
+summary(reg3_d2)
+
+
+# Mixture preds: Try including all data, but exclude outcome. 
+reg4_d2 = glm(preds_d2 ~ ., data = df2[, !names(df2) %in% c("Y")])
+# Looks like the direction on exposures is generally swapped.
+summary(reg4_d2)
+# TODO: need to make an sl3 task for prediction.
+if (FALSE) {
+  preds3_d2 = res2$reg_mixture$predict(data2[, res2$exposures])
+}
+```
+
+### Review results
+
+```{r data2_results}
+summary(result2$outcome_rescaled)
+data2[[result2$outcome]] = result2$outcome_rescaled
+# Analyze mixture distribution.
+# TODO: fix "unknown column" error due to rescaling of outcome variable.
+mix_result2 = analyze_mixture(data2, result2,
+                             name = "Dataset 2",
+                             reg_vars = task2$covariates,
+                             vars_desc = task2$covariates)
+
+# TODO: get plot_analysis() working.
+plot_analysis(mix_result2)
+```
+```{r results="asis"}
+# Run once and display as html.
+display_mixture(mix_result2)
+# Run again, this time as latex.
+options(knitr.table.format = "latex")
+kab_tab = display_mixture(mix_result2,
+                          label = "mixture-data2",
+                          caption = "Summary of mixture analysis for dataset 2")
+cat(kab_tab, file = "data2-summary-table.tex")
+# Restore previous table format setting.
+options(knitr.table.format = "html")
+#getOption("knitr.table.format")
+```

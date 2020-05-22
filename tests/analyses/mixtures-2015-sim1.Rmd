@@ -10,7 +10,7 @@ vignette: >
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-setwd(here::here("vignettes"))
+setwd(here::here("tests/analyses"))
 
 # Enable to generate high-res plots for the paper
 #knitr::opts_chunk$set(dpi = 300, fig.width = 4, fig.height = 4)
@@ -25,7 +25,7 @@ See https://www.niehs.nih.gov/news/events/pastmtg/2015/statistical/index.cfm
 ### Import data
 
 ```{r data1_import}
-data = rio::import("../inst/extdata/niehs-2015-dataset1.xls")
+data = rio::import("../../inst/extdata/niehs-2015-dataset1.xls")
 str(data)
 
 task = list(
@@ -214,7 +214,8 @@ result =
             #mixture_fn = tlmixture::mixture_backfit_lm,
             #mixture_fn = mixture_backfit_sl3,
             mixture_fn = estimator_sl3,
-            folds_cvtmle = 4,
+            #folds_cvtmle = 4,
+            folds_cvtmle = 2,
             #folds_cvtmle = folds_cvtmle,
             #folds_cvtmle = 3,
             #folds_cvtmle = 2,
@@ -222,13 +223,15 @@ result =
             #folds_cvtmle = 20,
             verbose = TRUE)
 
+save(result, file = "data/niehs-sim1-result.RData")
+
 result
 
 result$combined$groups_df
 qplot(result$groups$mixture_df$all) + theme_minimal()
 ```
 
-### Test backfit lm
+### Test backfit lm (old)
 
 ```{r test_backfit_lm, eval = FALSE}
 df2 = df
@@ -253,7 +256,7 @@ str(preds)
 result$groups$groups_df
 ```
 
-### Run mixture_sl3 on full data
+### Run mixture_sl3 on full data (old)
 
 ```{r test_mixture_backfit_sl3, eval = FALSE}
 #res = mixture_backfit_lm(df2,
