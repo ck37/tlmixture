@@ -20,9 +20,9 @@ library(magrittr)
 
 See https://www.niehs.nih.gov/news/events/pastmtg/2015/statistical/index.cfm
 
-## Simulated Dataset 2
+# Simulated Dataset 2
 
-### Import data
+## Import data
 
 ```{r data2_import}
 data2 = rio::import("../../inst/extdata/niehs-2015-dataset2.xls")
@@ -39,7 +39,7 @@ task2$covariates = setdiff(names(data2), c(task2$id, task2$exposures, task2$outc
 task2
 ```
 
-### Exploratory data analysis
+## Exploratory data analysis
 
 TODO: determine if we need to log-transform the data.
 
@@ -66,6 +66,8 @@ for (exposure in task2$exposures) {
 }
 
 ```
+
+## Mixture analysis
 
 ### Prep to run
 
@@ -227,7 +229,7 @@ if (FALSE) {
 }
 ```
 
-### Review results
+## Interpret
 
 ```{r data2_results}
 summary(result2$outcome_rescaled)
