@@ -107,8 +107,8 @@ analyze_mixture =
     if (!is.null(vars_desc)) {
       if (rescale_adjustment) {
         # Rescale to mean 0, std dev. 1
-        data2 = ck37r::standardize(data,
-                                   skip_vars = setdiff(names(data), vars_desc))
+        data2 = standardize(data,
+                            skip_vars = setdiff(names(data), vars_desc))
       } else {
         data2 = data
       }

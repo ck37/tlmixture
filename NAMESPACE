@@ -23,45 +23,53 @@ export(plot_analysis)
 export(tlmixture)
 import(Rsolnp)
 import(SuperLearner)
-importFrom(SuperLearner,SuperLearner)
-importFrom(SuperLearner,SuperLearner.CV.control)
-importFrom(dplyr,arrange)
-importFrom(dplyr,filter)
-importFrom(dplyr,group_by)
-importFrom(dplyr,if_else)
-importFrom(dplyr,mutate)
-importFrom(dplyr,mutate_at)
-importFrom(dplyr,n)
-importFrom(dplyr,ntile)
-importFrom(dplyr,one_of)
-importFrom(dplyr,select)
-importFrom(dplyr,summarize_at)
-importFrom(dplyr,vars)
-importFrom(ggplot2,aes)
-importFrom(ggplot2,element_blank)
-importFrom(ggplot2,expand_limits)
-importFrom(ggplot2,geom_errorbar)
-importFrom(ggplot2,geom_line)
-importFrom(ggplot2,geom_point)
-importFrom(ggplot2,geom_smooth)
-importFrom(ggplot2,geom_vline)
-importFrom(ggplot2,ggplot)
-importFrom(ggplot2,labs)
-importFrom(ggplot2,qplot)
-importFrom(ggplot2,theme)
-importFrom(ggplot2,theme_bw)
-importFrom(ggplot2,theme_minimal)
+importFrom(SuperLearner,
+  SuperLearner,
+  SuperLearner.CV.control
+)
+importFrom(dplyr,
+  arrange,
+  filter,
+  group_by,
+  if_else,
+  mutate,
+  mutate_at,
+  n,
+  ntile,
+  one_of,
+  select,
+  summarize_at,
+  vars
+)
+importFrom(ggplot2,
+  aes,
+  element_blank,
+  expand_limits,
+  geom_errorbar,
+  geom_line,
+  geom_point,
+  geom_smooth,
+  geom_vline,
+  ggplot,
+  labs,
+  qplot,
+  theme,
+  theme_bw,
+  theme_minimal
+)
 importFrom(magrittr,"%>%")
-importFrom(stats,as.formula)
-importFrom(stats,binomial)
-importFrom(stats,coef)
-importFrom(stats,cor)
-importFrom(stats,gaussian)
-importFrom(stats,glm)
-importFrom(stats,lm)
-importFrom(stats,plogis)
-importFrom(stats,predict)
-importFrom(stats,qlogis)
-importFrom(stats,quantile)
-importFrom(stats,sd)
-importFrom(stats,var)
+importFrom(stats,
+  as.formula,
+  binomial,
+  coef,
+  cor,
+  gaussian,
+  glm,
+  lm,
+  plogis,
+  predict,
+  qlogis,
+  quantile,
+  sd,
+  var
+)

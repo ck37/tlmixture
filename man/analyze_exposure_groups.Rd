@@ -11,6 +11,7 @@ analyze_exposure_groups(
   exposures,
   mixture_fn,
   refit_mixtures = FALSE,
+  id = NULL,
   verbose = FALSE
 )
 }
@@ -26,6 +27,10 @@ analyze_exposure_groups(
 \item{mixture_fn}{tbd}
 
 \item{refit_mixtures}{tbd}
+
+\item{id}{Optional cluster grouping, one value per row of \code{data}. When
+given, it is passed to \code{mixture_fn} for the full-data refit if the
+function accepts \code{id} or \code{...}.}
 
 \item{verbose}{tbd}
 }

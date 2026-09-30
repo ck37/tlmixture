@@ -16,6 +16,11 @@
 #' @param family Not used for this mixture estimator.
 #' @param verbose tbd
 #' @param debug If True show very detailed output.
+#' @param id Optional cluster identifier, one value per row of \code{data}
+#'   (tlmixture() passes the training-fold ids when its \code{id} argument is
+#'   used). When given, the sl3 tasks carry the ids so that sl3's internal
+#'   cross-validation keeps clusters together. NULL (default) leaves the
+#'   estimator unchanged.
 #' @param ... tbd
 #'
 #' @importFrom stats as.formula as.formula binomial coef lm
@@ -40,10 +45,16 @@ mixture_backfit_sl3 =
            force_offset = TRUE,
            quantiles = NULL, family = "continuous", verbose = FALSE,
            debug = FALSE,
+           id = NULL,
            ...) {
 
   if (verbose) {
     cat("Create mixture via backfit SL3.\n")
+  }
+
+  if (!is.null(id) && length(id) != nrow(data)) {
+    stop("mixture_backfit_sl3(): id has ", length(id), " values but data has ",
+         nrow(data), " rows.")
   }
 
   if (is.null(estimator_confounders)) {
@@ -85,6 +96,15 @@ mixture_backfit_sl3 =
   data$offset_mixture = offset_null
   #}
 
+  # Cluster ids travel with the data as a column so that sl3 tasks can use
+  # them. It is added after the confounders were chosen, so it is never used
+  # as a covariate.
+  id_col = NULL
+  if (!is.null(id)) {
+    id_col = ".tlmixture_cluster_id"
+    data[[id_col]] = id
+  }
+
   for (iteration in seq(max_iterations)) {
 
     if (debug) {
@@ -99,14 +119,16 @@ mixture_backfit_sl3 =
                                         covariates = exposures,
                                         outcome = outcome,
                                         offset = "offset_mixture",
-                                        outcome_type = family)
+                                        outcome_type = family,
+                                        id = id_col)
     } else {
       # Create the residualized outcome.
       data$`_outcome_ym` = data[[outcome]] - data$offset_mixture
       task_mixture = sl3::make_sl3_Task(data = data,
                                         covariates = exposures,
                                         outcome = "_outcome_ym",
-                                        outcome_type = family)
+                                        outcome_type = family,
+                                        id = id_col)
     }
 
     # TODO: incorporate the number of SL CV folds specified somehow.
@@ -127,7 +149,8 @@ mixture_backfit_sl3 =
                                         covariates = exposures,
                                         outcome = outcome,
                                         offset = "offset_mixture",
-                                        outcome_type = family)
+                                        outcome_type = family,
+                                        id = id_col)
     }
     # We don't need a new task if family is gaussian.
 
@@ -184,7 +207,8 @@ mixture_backfit_sl3 =
                            covariates = confounders,
                            outcome = outcome,
                            offset = "offset_confounders",
-                           outcome_type = family)
+                           outcome_type = family,
+                           id = id_col)
     } else {
       # Create the residualized outcome.
       data$`_outcome_yc` = data[[outcome]] - data$offset_confounders
@@ -192,7 +216,8 @@ mixture_backfit_sl3 =
         sl3::make_sl3_Task(data = data,
                            covariates = confounders,
                            outcome = "_outcome_yc",
-                           outcome_type = family)
+                           outcome_type = family,
+                           id = id_col)
     }
 
     fit_confounders = estimator_confounders$train(task_confounders)
@@ -212,7 +237,8 @@ mixture_backfit_sl3 =
                            covariates = confounders,
                            outcome = outcome,
                            offset = "offset_confounders",
-                           outcome_type = family)
+                           outcome_type = family,
+                           id = id_col)
     }
     # For family = gaussian we don't need to update the task.
 

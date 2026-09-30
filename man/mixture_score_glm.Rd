@@ -23,6 +23,7 @@ mixture_score_glm(
   family = "continuous",
   verbose = FALSE,
   debug = FALSE,
+  id = NULL,
   ...
 )
 }
@@ -58,6 +59,11 @@ mixture_score_glm(
 \item{verbose}{tbd}
 
 \item{debug}{If True show very detailed output.}
+
+\item{id}{Optional cluster identifier, one value per row of \code{data}
+(tlmixture() passes it when its \code{id} argument is used). When given,
+the cross-fitting folds for the exposure-naive outcome regression keep
+clusters together. NULL (default) leaves the estimator unchanged.}
 
 \item{...}{tbd}
 }

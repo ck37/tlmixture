@@ -17,7 +17,9 @@ tlmixture(
   cluster_exposures = FALSE,
   mixture_fn = mixture_glm,
   refit_mixtures = TRUE,
-  verbose = FALSE
+  verbose = FALSE,
+  id = NULL,
+  folds_by = NULL
 )
 }
 \arguments{
@@ -45,12 +47,91 @@ a vector of pre-clustered exposures.}
 \item{cluster_exposures}{Whether to automatically cluster a vector of exposures into
 sub-groups (default FALSE; TRUE not yet supported).}
 
-\item{mixture_fn}{Current options: mixture_glm, mixture_pls, or mixture_sl}
+\item{mixture_fn}{Function that estimates the mixture on training data, e.g.
+mixture_glm, mixture_pls, mixture_sl, mixture_score_glm, or
+mixture_score_sl3. To change a mixture function's settings, wrap it and
+forward \code{...} (see Examples); forwarding \code{...} also passes
+\code{id} through when clustering, so the mixture's internal
+cross-validation keeps clusters together.}
 
 \item{refit_mixtures}{After CV-TMEL, refit mixture functions to full dataset.}
 
 \item{verbose}{If TRUE, display more detailed info during execution.}
+
+\item{id}{Optional cluster identifier(s) for cluster-robust standard errors,
+for data in which observations are correlated within groups (e.g. siblings
+in a family, children in a site). The simplest form is the name(s) of
+columns in \code{data}, e.g. \code{id = "family"}, or
+\code{id = c("school", "neighborhood")} for multiway clustering (Cameron,
+Gelbach & Miller 2011); those columns are used as clusters and are not
+used as confounders. Alternatively pass the ids directly: a vector with one
+value per row of \code{data}, or a list or data frame of such vectors.
+When given: CV-TMLE folds keep clusters together
+(\code{rsample::group_vfold_cv()}, stratified on each cluster's mean
+outcome); the
+outcome and propensity SuperLearners group their internal CV folds by
+cluster; the ids are passed to \code{mixture_fn} as \code{id} when it
+accepts an \code{id} or \code{...} argument, so the built-in mixture
+functions with internal cross-validation (\code{mixture_sl},
+\code{mixture_score_glm}, \code{mixture_score_sl3},
+\code{mixture_backfit_sl}, \code{mixture_backfit_sl3}) keep clusters
+together too, including in the full-data refit; influence-curve variances sum within clusters;
+and confidence intervals and p-values use a t distribution with (fewest
+clusters - 1) degrees of freedom. A variable nested in another (family
+within site) is covered by clustering on the outer one and is dropped with
+a message. NULL (the default) assumes independent observations.}
+
+\item{folds_by}{With several crossed cluster variables, the name of the
+cluster variable to form CV-TMLE folds on. By default folds keep every
+cluster variable intact when possible, and otherwise use the coarsest
+variable with at least \code{folds_cvtmle} clusters.}
 }
 \description{
 This is our main function.
+}
+\examples{
+\donttest{
+# Simulated data: 150 families of 1-3 children, with a shared family effect.
+set.seed(1)
+family = rep(1:150, times = sample(1:3, 150, replace = TRUE))
+n = length(family)
+data = data.frame(w1 = rnorm(n), w2 = rnorm(n),
+                  a1 = rnorm(n), a2 = rnorm(n), a3 = rnorm(n),
+                  family = family)
+data$y = data$a1 + 0.5 * data$a2 + data$w1 + rnorm(150)[family] + rnorm(n)
+
+# Cluster-robust standard errors: name the cluster column in data. It is
+# used for clustering only, never as a confounder.
+result = tlmixture(data, outcome = "y", exposures = c("a1", "a2", "a3"),
+                   estimator_outcome = c("SL.mean", "SL.glm"),
+                   id = "family")
+result$combined$groups_df
+result$cluster_df   # number of families - 1
+
+# Nested clusters (families within sites): pass both; clustering on the
+# outer variable covers the inner one.
+# tlmixture(data, ..., id = c("family", "site"))
+}
+
+\dontrun{
+# A customized mixture function: wrap it and forward the dots. Forwarding
+# the dots also passes the cluster ids through, so the sl3 learners'
+# internal cross-validation keeps families together.
+library(sl3)
+my_mixture = function(...) {
+  mixture_score_sl3(
+    ...,
+    estimator_mixture = Lrnr_sl$new(
+      learners = Stack$new(Lrnr_glm$new(), Lrnr_xgboost$new(nrounds = 100)),
+      metalearner = Lrnr_nnls$new(convex = TRUE)),
+    estimator_confounders = Lrnr_sl$new(
+      learners = Stack$new(Lrnr_glm$new(), Lrnr_ranger$new(num.trees = 500)),
+      metalearner = Lrnr_nnls$new(convex = TRUE)))
+}
+result = tlmixture(data, outcome = "y", exposures = c("a1", "a2", "a3"),
+                   estimator_outcome = c("SL.mean", "SL.ranger"),
+                   mixture_fn = my_mixture,
+                   id = "family")
+}
+
 }

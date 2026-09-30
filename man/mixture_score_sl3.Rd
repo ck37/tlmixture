@@ -23,6 +23,7 @@ mixture_score_sl3(
   family = "continuous",
   verbose = FALSE,
   debug = FALSE,
+  id = NULL,
   ...
 )
 }
@@ -58,6 +59,13 @@ mixture_score_sl3(
 \item{verbose}{tbd}
 
 \item{debug}{If True show very detailed output.}
+
+\item{id}{Optional cluster identifier, one value per row of \code{data}
+(tlmixture() passes the training-fold ids when its \code{id} argument is
+used). When given, the cross-fitting folds for the exposure-naive outcome
+regression keep clusters together, and the sl3 tasks carry the ids so
+that sl3's internal cross-validation does too. NULL (default) leaves the
+estimator unchanged.}
 
 \item{...}{tbd}
 }
