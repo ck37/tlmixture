@@ -16,6 +16,12 @@
 #' @param family Not used for this mixture estimator.
 #' @param verbose tbd
 #' @param debug If True show very detailed output.
+#' @param id Optional cluster identifier, one value per row of \code{data}
+#'   (tlmixture() passes the training-fold ids when its \code{id} argument is
+#'   used). When given, the cross-fitting folds for the exposure-naive outcome
+#'   regression keep clusters together, and the sl3 tasks carry the ids so
+#'   that sl3's internal cross-validation does too. NULL (default) leaves the
+#'   estimator unchanged.
 #' @param ... tbd
 #'
 #' @importFrom stats as.formula as.formula binomial coef lm
@@ -40,10 +46,16 @@ mixture_score_sl3 =
            force_offset = TRUE,
            quantiles = NULL, family = "continuous", verbose = FALSE,
            debug = FALSE,
+           id = NULL,
            ...) {
 
   if (verbose) {
     cat("Create score-based mixture via sl3.\n")
+  }
+
+  if (!is.null(id) && length(id) != nrow(data)) {
+    stop("mixture_score_sl3(): id has ", length(id), " values but data has ",
+         nrow(data), " rows.")
   }
 
   if (is.null(estimator_confounders)) {
@@ -89,13 +101,26 @@ mixture_score_sl3 =
   # For continuous variable, this will be subtracted from the outcome before prediction.
   data$offset_mixture = offset_null
   #}
+
+  # Cluster ids travel with the data as a column so that sl3 tasks can use
+  # them (sl3 builds its internal folds with origami, keeping ids together).
+  # The column is added after the confounders were chosen, so it is never used
+  # as a covariate.
+  id_col = NULL
+  if (!is.null(id)) {
+    id_col = ".tlmixture_cluster_id"
+    data[[id_col]] = id
+  }
   
   # 1. Cross-validated exposure-naive outcome regression E[ Y | W ]
   # Use estimator_confounders
   
   # Create cross-validation folds.
-  cv_folds = 5L
-  folds = sample(rep(seq(cv_folds), length.out = nrow(data)))
+  # With cluster ids, whole clusters are assigned to folds so that no
+  # observation is predicted by a model trained on another cluster member.
+  crossfit = crossfit_folds(nrow(data), 5L, id)
+  folds = crossfit$folds
+  cv_folds = crossfit$cv_folds
  
   # Create a standalone vector for the exposure-naive outcome prediction. 
   # This could alternatively be a column in the dataframe.
@@ -115,7 +140,8 @@ mixture_score_sl3 =
                          covariates = confounders,
                          outcome = outcome,
                          #offset = "offset_confounders",
-                         outcome_type = family)
+                         outcome_type = family,
+                         id = id_col)
     
     fit_confounders = estimator_confounders$train(task_confounders)
     
@@ -140,7 +166,7 @@ mixture_score_sl3 =
   }
   
   # 2. Create meta-level dataset
-  meta_df = cbind(data[, c(outcome, exposures, confounders)],
+  meta_df = cbind(data[, c(outcome, exposures, confounders, id_col)],
                   `_offset` = exposure_naive_outcome)
   
   # Create interaction-term covariates
@@ -150,7 +176,8 @@ mixture_score_sl3 =
                                     covariates = c(exposures, confounders),
                                     offset = "_offset",
                                     outcome = outcome,
-                                    outcome_type = family)
+                                    outcome_type = family,
+                                    id = id_col)
   # Include two-way interactions of A and W, including A:A
   #interaction_grid = expand.grid(c(exposures, confounders), exposures)
   #glm_formula =

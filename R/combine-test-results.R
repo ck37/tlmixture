@@ -4,6 +4,10 @@
 #' @param family tbd
 #' @param quantiles_mixtures tbd
 #' @param verbose tbd
+#' @param cluster_id Output of check_cluster_id() for the full data, or NULL
+#'   (no clustering). When given, influence-curve variances are clustered.
+#' @param df Degrees of freedom for t critical values and p-values; Inf (no
+#'   clustering) keeps the normal-based 1.96, qnorm() and pnorm().
 #'
 #' @importFrom stats glm qlogis plogis var
 #'
@@ -11,7 +15,9 @@ combine_test_results =
   function(result,
            family,
            quantiles_mixtures,
-           verbose = FALSE) {
+           verbose = FALSE,
+           cluster_id = NULL,
+           df = Inf) {
 
   if (verbose) {
     cat("\nCombining test results.\n")
@@ -171,14 +177,27 @@ combine_test_results =
         result
       })
 
+      # Row numbers (in the full data) behind each fold's influence curve, in
+      # the same order: by() splits the rows exactly as it split the curves.
+      # Used to look up cluster ids for clustered variances.
+      ic_rows = NULL
+      if (!is.null(test_results$row_index)) {
+        ic_rows = base::by(test_results, test_results$fold, function(fold_data) {
+          fold_data$row_index
+        })
+      }
+
       # Calculate fold sizes.
 
-      # Calculate IC variances.
-      ic_vars = sapply(influence_curves, var)
+      # Calculate IC variances (clustered when cluster ids are given).
+      ic_vars = sapply(seq_along(influence_curves), function(k) {
+        ic_var(influence_curves[[k]], ic_rows[[k]], cluster_id)
+      })
 
       # Calculate SEs
-      std_errs = lapply(influence_curves, function(ic) {
-        var(ic) / length(ic)
+      std_errs = lapply(seq_along(influence_curves), function(k) {
+        ic = influence_curves[[k]]
+        ic_var(ic, ic_rows[[k]], cluster_id) / length(ic)
       })
 
       # Calculate combined SE.
@@ -187,9 +206,11 @@ combine_test_results =
       # Calculate quantile-specific mean.
       psi = mean(thetas)
 
-      # Calculate CI
-      ci_lower = psi - 1.96 * std_err
-      ci_upper = psi + 1.96 * std_err
+      # Calculate CI. With clustering, a t critical value with (clusters - 1)
+      # degrees of freedom; otherwise the original 1.96.
+      crit_quantile = if (is.finite(df)) stats::qt(0.975, df) else 1.96
+      ci_lower = psi - crit_quantile * std_err
+      ci_upper = psi + crit_quantile * std_err
 
       # Calculate P-value (two-sided).
 
@@ -213,7 +234,9 @@ combine_test_results =
         # Adjusted quantile-specific means, one per CV-TMLE fold
         means = thetas,
         # This is a list, with one element per CV-TMLE fold
-        curves = influence_curves
+        curves = influence_curves,
+        # Row numbers behind each fold's curve (NULL without row_index).
+        rows = ic_rows
       )
       quantile_results[[quantile_i]] = results
 
@@ -239,8 +262,10 @@ combine_test_results =
 
     # Calculate variance of difference of influence curves for each CV-TMLE fold.
     # One element per fold.
+    # Both quantiles' curves come from the same test rows in the same order.
     rd_ic_var = sapply(seq(length(qmax$curves)), function(ic_i) {
-      var(qmax$curves[[ic_i]] - qmin$curves[[ic_i]])
+      ic_var(qmax$curves[[ic_i]] - qmin$curves[[ic_i]], qmax$rows[[ic_i]],
+             cluster_id)
     })
 
     n_validation = sapply(seq(length(qmax$curves)), function(ic_i) {
@@ -270,11 +295,16 @@ combine_test_results =
 
     # 1-sided p-value
     # rd_pval_overall = 1 - pnorm(rd_overall / rd_se_overall)
-    # 2-sided p-value
-    rd_pval_overall = 2 * stats::pnorm(-abs(rd_overall / rd_se_overall))
+    # 2-sided p-value. With clustering, from a t distribution with
+    # (clusters - 1) degrees of freedom.
+    if (is.finite(df)) {
+      rd_pval_overall = 2 * stats::pt(-abs(rd_overall / rd_se_overall), df)
+    } else {
+      rd_pval_overall = 2 * stats::pnorm(-abs(rd_overall / rd_se_overall))
+    }
 
     # Confidence interval
-    z_1.96 = stats::qnorm(0.975)
+    z_1.96 = if (is.finite(df)) stats::qt(0.975, df) else stats::qnorm(0.975)
     rd_ci_lower = rd_overall - z_1.96 * rd_se_overall
     rd_ci_upper = rd_overall + z_1.96 * rd_se_overall
 

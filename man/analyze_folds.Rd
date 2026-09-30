@@ -16,6 +16,7 @@ analyze_folds(
   mixture_fn,
   cluster_exposures,
   folds_sl = 2L,
+  fold_groups = NULL,
   verbose = FALSE
 )
 }
@@ -41,6 +42,11 @@ analyze_folds(
 \item{cluster_exposures}{tbd}
 
 \item{folds_sl}{tbd}
+
+\item{fold_groups}{Optional cluster grouping, one value per row of the full
+data (from cluster_fold_groups()). When given, SuperLearner's internal CV
+and mixture_fn (if it accepts \code{id}) keep clusters together, and test
+rows are tagged with their original row numbers.}
 
 \item{verbose}{tbd}
 }

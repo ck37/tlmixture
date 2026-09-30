@@ -8,6 +8,9 @@
 #' @param exposures tbd
 #' @param mixture_fn tbd
 #' @param refit_mixtures tbd
+#' @param id Optional cluster grouping, one value per row of \code{data}. When
+#'   given, it is passed to \code{mixture_fn} for the full-data refit if the
+#'   function accepts \code{id} or \code{...}.
 #' @param verbose tbd
 #'
 #' @importFrom dplyr arrange
@@ -18,6 +21,7 @@ analyze_exposure_groups = function(combined_results,
                                    exposures,
                                    mixture_fn,
                                    refit_mixtures = FALSE,
+                                   id = NULL,
                                    verbose = FALSE) {
 
   if (verbose) {
@@ -56,7 +60,12 @@ analyze_exposure_groups = function(combined_results,
     for (group_i in seq(length(exposures))) {
       # Fit mixture to full dataframe.
       # TODO: also save mix obj.
-      mix_obj = mixture_fn(data, outcome, exposures[[group_i]], verbose = verbose)
+      if (!is.null(id) && accepts_arg(mixture_fn, "id")) {
+        mix_obj = mixture_fn(data, outcome, exposures[[group_i]], verbose = verbose,
+                             id = id)
+      } else {
+        mix_obj = mixture_fn(data, outcome, exposures[[group_i]], verbose = verbose)
+      }
       mixture_objs[[group_i]] = mix_obj
 
       # Predict on full df.

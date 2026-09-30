@@ -1,0 +1,189 @@
+---
+title: "tlmixture with clustered data"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{tlmixture with clustered data}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[utf8]{inputenc}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tlmixture)
+```
+
+This example shows how to analyze data where observations are not
+independent, e.g. siblings within families. It covers:
+
+1. orthogonalizing exposures with family-aware cross-fitting,
+2. running `tlmixture()` with and without cluster-robust standard errors, and
+3. passing a customized mixture function so its internal cross-validation
+   also keeps families together.
+
+## Simulate clustered data
+
+Families of 1 to 3 children. Siblings share a family effect on the outcome
+and on the first exposure, so observations within a family are correlated.
+
+```{r simulate}
+set.seed(1, "L'Ecuyer-CMRG")
+
+n_families = 400
+family_size = sample(1:3, n_families, replace = TRUE)
+family = rep(seq_len(n_families), family_size)
+n = length(family)
+
+family_effect = rnorm(n_families, sd = 1.5)[family]
+
+df = data.frame(
+  w1 = rnorm(n),
+  w2 = rbinom(n, 1, 0.5),
+  family = family)
+
+# Exposures depend on the covariates, and the first on the family as well.
+df$a1 = 0.5 * df$w1 + rnorm(n_families)[family] + rnorm(n, sd = 0.5)
+df$a2 = 0.3 * df$w2 + rnorm(n)
+df$a3 = rnorm(n)
+
+df$y = 1 + 0.6 * df$a1 + 0.3 * df$a2 + 0.5 * df$w1 + family_effect + rnorm(n)
+
+task = list(
+  outcome = "y",
+  exposures = c("a1", "a2", "a3"),
+  covariates = c("w1", "w2"),
+  id = "family")
+
+cat("Children:", n, " Families:", n_families, "\n")
+table(family_size)
+```
+
+## Orthogonalize exposures
+
+As in the other analyses in this folder, each exposure is replaced by its
+residual given the covariates, A' = A - E[A | W]. Here E[A | W] is estimated
+nonparametrically with SuperLearner, combining a random forest (ranger) with
+a glm. A forest on its own can leave some linear confounding behind (it
+flattens smooth trends near the edges of the covariate range); the glm
+captures those, and SuperLearner weights the two by cross-validated fit.
+
+With clustered data the prediction for each child should come from a model
+that never saw the child's family. Ranger's out-of-bag predictions do not
+guarantee that (a tree can be trained on a sibling), so E[A | W] is
+cross-fitted instead, over folds that keep whole families together, and
+SuperLearner's own internal folds are grouped by family as well (`id`).
+
+```{r orthogonalize}
+library(SuperLearner)
+
+# Assign whole families to folds.
+n_folds = 5
+families = unique(df[[task$id]])
+family_fold = sample(rep(seq_len(n_folds), length.out = length(families)))
+fold = family_fold[match(df[[task$id]], families)]
+
+# No family is split across folds.
+stopifnot(all(tapply(fold, df[[task$id]], function(x) length(unique(x))) == 1))
+
+df_ortho = df
+for (exposure in task$exposures) {
+  fitted = rep(NA_real_, n)
+  for (k in seq_len(n_folds)) {
+    train = fold != k
+    # Estimate E[A | W] without fold k's families; SuperLearner's internal
+    # CV also keeps families together.
+    sl = SuperLearner(Y = df[[exposure]][train],
+                      X = df[train, task$covariates, drop = FALSE],
+                      newX = df[!train, task$covariates, drop = FALSE],
+                      family = gaussian(),
+                      SL.library = c("SL.mean", "SL.glm", "SL.ranger"),
+                      id = df[[task$id]][train],
+                      cvControl = list(V = 5))
+    fitted[!train] = sl$SL.predict[, 1]
+  }
+  # A' = A - E[A | W]
+  df_ortho[[exposure]] = df[[exposure]] - fitted
+}
+
+# The orthogonalized exposures are (nearly) uncorrelated with the covariates.
+round(cor(df_ortho[, task$exposures], df_ortho[, task$covariates]), 3)
+```
+
+## Run tlmixture without and with clustering
+
+The `family` column is named in `id`, so it is used for clustering only and
+never as a confounder. Without `id` it would be treated as a covariate, so it
+is dropped from the unclustered run.
+
+```{r run_tlmixture}
+df_no_id = df_ortho[, setdiff(names(df_ortho), task$id)]
+
+set.seed(2, "L'Ecuyer-CMRG")
+result_independent =
+  tlmixture(df_no_id,
+            outcome = task$outcome,
+            exposures = task$exposures,
+            estimator_outcome = c("SL.mean", "SL.glm"),
+            refit_mixtures = FALSE)
+
+set.seed(2, "L'Ecuyer-CMRG")
+result_clustered =
+  tlmixture(df_ortho,
+            outcome = task$outcome,
+            exposures = task$exposures,
+            estimator_outcome = c("SL.mean", "SL.glm"),
+            refit_mixtures = FALSE,
+            id = task$id)
+
+# Degrees of freedom for the t-based intervals: families - 1.
+result_clustered$cluster_df
+```
+
+## Compare the results
+
+Treating siblings as independent understates the uncertainty. The clustered
+standard error accounts for the within-family correlation, so its confidence
+interval is wider. The estimates can also differ slightly, because the CV-TMLE
+folds are formed by family.
+
+```{r compare}
+cols = c("rd", "rd_se", "rd_ci_lower", "rd_ci_upper", "rd_pval")
+comparison = rbind(
+  independent = result_independent$combined$groups_df[1, cols],
+  clustered = result_clustered$combined$groups_df[1, cols])
+signif(comparison, 3)
+
+cat("SE ratio (clustered / independent):",
+    round(comparison["clustered", "rd_se"] / comparison["independent", "rd_se"], 2), "\n")
+```
+
+## Customizing the mixture function
+
+To change a mixture function's settings, wrap it and forward the dots.
+Forwarding the dots also passes the cluster ids through, so the mixture's
+own cross-validation keeps families together too.
+
+```{r custom_mixture, eval = requireNamespace("sl3", quietly = TRUE)}
+library(sl3)
+
+my_mixture = function(...) {
+  mixture_score_sl3(
+    ...,
+    estimator_mixture = Lrnr_sl$new(
+      learners = Stack$new(Lrnr_glm$new(), Lrnr_mean$new()),
+      metalearner = Lrnr_nnls$new(convex = TRUE)))
+}
+
+set.seed(3, "L'Ecuyer-CMRG")
+result_custom =
+  suppressWarnings(
+    tlmixture(df_ortho,
+              outcome = task$outcome,
+              exposures = task$exposures,
+              estimator_outcome = c("SL.mean", "SL.glm"),
+              mixture_fn = my_mixture,
+              refit_mixtures = FALSE,
+              id = task$id))
+
+signif(result_custom$combined$groups_df[1, cols], 3)
+```

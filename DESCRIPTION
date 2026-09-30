@@ -14,7 +14,6 @@ License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.1.0
 VignetteBuilder: knitr
 Suggests: 
     here,
@@ -25,11 +24,11 @@ Suggests:
     MASS,
     ranger,
     rio,
+    sandwich,
     speedglm,
     testthat,
     xgboost
 Imports: 
-    ck37r,
     dplyr,
     ggplot2,
     ggrepel,
@@ -45,6 +44,5 @@ Imports:
 Depends:
     SuperLearner
 Remotes: 
-    github::ck37/ck37r,
-    github::tlverse/hal9001,
     github::tlverse/sl3
+Config/roxygen2/version: 8.1.0

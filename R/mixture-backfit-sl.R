@@ -13,6 +13,10 @@
 #' @param quantiles tbd
 #' @param family Not used for this mixture estimator.
 #' @param verbose tbd
+#' @param id Optional cluster identifier, one value per row of \code{data}
+#'   (tlmixture() passes it when its \code{id} argument is used). When given,
+#'   SuperLearner's internal cross-validation keeps clusters together. NULL
+#'   (default) leaves the estimator unchanged.
 #' @param ... tbd
 #'
 #' @importFrom stats as.formula as.formula binomial coef lm
@@ -29,6 +33,7 @@ mixture_backfit_sl =
            max_iterations = 10L,
            tolerance = 0.00001,
            quantiles = NULL, family = "gaussian", verbose = FALSE,
+           id = NULL,
            ...) {
 
   if (verbose) {
@@ -47,6 +52,10 @@ mixture_backfit_sl =
   # Initialize  Y*
   y_star = data[[outcome]]
 
+  # With cluster ids, keep clusters within SuperLearner's internal folds.
+  sl_args_mixture = sl_cluster_args(id, folds_mixture)
+  sl_args_confounders = sl_cluster_args(id, folds_confounders)
+
   for (iteration in seq(max_iterations)) {
 
     # Estimate mixture function
@@ -61,7 +70,8 @@ mixture_backfit_sl =
                    #method = "method.NNLS",
                    SL.library = estimator_mixture,
                    verbose = verbose,
-                   cvControl = list(V = folds_mixture))
+                   id = sl_args_mixture$id,
+                   cvControl = list(V = sl_args_mixture$V))
     }, error = function(e) {
       cat(e)
       # Can be due to this error:
@@ -96,7 +106,8 @@ mixture_backfit_sl =
                    X = df_confounders,
                    family = gaussian(),
                    SL.library = estimator_mixture,
-                   cvControl = list(V = folds_confounders))
+                   id = sl_args_confounders$id,
+                   cvControl = list(V = sl_args_confounders$V))
 
     if (verbose) {
       cat("Confounder adjustment regression:\n")

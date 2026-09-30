@@ -18,6 +18,7 @@ mixture_backfit_sl(
   quantiles = NULL,
   family = "gaussian",
   verbose = FALSE,
+  id = NULL,
   ...
 )
 }
@@ -47,6 +48,11 @@ mixture_backfit_sl(
 \item{family}{Not used for this mixture estimator.}
 
 \item{verbose}{tbd}
+
+\item{id}{Optional cluster identifier, one value per row of \code{data}
+(tlmixture() passes it when its \code{id} argument is used). When given,
+SuperLearner's internal cross-validation keeps clusters together. NULL
+(default) leaves the estimator unchanged.}
 
 \item{...}{tbd}
 }

@@ -16,6 +16,10 @@
 #' @param family Not used for this mixture estimator.
 #' @param verbose tbd
 #' @param debug If True show very detailed output.
+#' @param id Optional cluster identifier, one value per row of \code{data}
+#'   (tlmixture() passes it when its \code{id} argument is used). When given,
+#'   the cross-fitting folds for the exposure-naive outcome regression keep
+#'   clusters together. NULL (default) leaves the estimator unchanged.
 #' @param ... tbd
 #'
 #' @importFrom stats as.formula as.formula binomial coef lm
@@ -40,10 +44,16 @@ mixture_score_glm =
            force_offset = TRUE,
            quantiles = NULL, family = "continuous", verbose = FALSE,
            debug = FALSE,
+           id = NULL,
            ...) {
 
   if (verbose) {
     cat("Create score-based mixture via glm.\n")
+  }
+
+  if (!is.null(id) && length(id) != nrow(data)) {
+    stop("mixture_score_glm(): id has ", length(id), " values but data has ",
+         nrow(data), " rows.")
   }
 
   if (is.null(estimator_confounders)) {
@@ -93,8 +103,11 @@ mixture_score_glm =
   # 1. Cross-validated exposure-naive outcome regression E[ Y | W ]
   
   # Create cross-validation folds.
-  cv_folds = 5L
-  folds = sample(rep(seq(cv_folds), length.out = nrow(data)))
+  # With cluster ids, whole clusters are assigned to folds so that no
+  # observation is predicted by a model trained on another cluster member.
+  crossfit = crossfit_folds(nrow(data), 5L, id)
+  folds = crossfit$folds
+  cv_folds = crossfit$cv_folds
  
   # Create a standalone vector for the exposure-naive outcome prediction. 
   # This could alternatively be a column in the dataframe.

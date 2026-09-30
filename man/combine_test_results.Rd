@@ -4,7 +4,14 @@
 \alias{combine_test_results}
 \title{Combine test results}
 \usage{
-combine_test_results(result, family, quantiles_mixtures, verbose = FALSE)
+combine_test_results(
+  result,
+  family,
+  quantiles_mixtures,
+  verbose = FALSE,
+  cluster_id = NULL,
+  df = Inf
+)
 }
 \arguments{
 \item{result}{tbd}
@@ -14,6 +21,12 @@ combine_test_results(result, family, quantiles_mixtures, verbose = FALSE)
 \item{quantiles_mixtures}{tbd}
 
 \item{verbose}{tbd}
+
+\item{cluster_id}{Output of check_cluster_id() for the full data, or NULL
+(no clustering). When given, influence-curve variances are clustered.}
+
+\item{df}{Degrees of freedom for t critical values and p-values; Inf (no
+clustering) keeps the normal-based 1.96, qnorm() and pnorm().}
 }
 \description{
 Combine test results

@@ -12,7 +12,8 @@ mixture_sl(
   quantiles,
   family = "binomial",
   verbose = FALSE,
-  sl_library = c("SL.mean", "SL.glm")
+  sl_library = c("SL.mean", "SL.glm"),
+  id = NULL
 )
 }
 \arguments{
@@ -31,6 +32,11 @@ mixture_sl(
 \item{verbose}{tbd}
 
 \item{sl_library}{tbd}
+
+\item{id}{Optional cluster identifier, one value per row of \code{data}
+(tlmixture() passes it when its \code{id} argument is used). When given,
+SuperLearner's internal cross-validation keeps clusters together. NULL
+(default) leaves the estimator unchanged.}
 }
 \description{
 Create exposure weights
